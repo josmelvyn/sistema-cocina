@@ -9,7 +9,16 @@ class Escuela extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['ruta_id', 'nombre', 'codigo_minerd', 'raciones_estandar'];
+    protected $fillable = [
+        'ruta_id', 
+        'nombre', 
+        'codigo_minerd', 
+        'raciones_estandar',
+        'director',   
+        'rnc',
+        'direccion',   
+        'telefono', 
+        'distrito'     ];
 
     // La escuela pertenece a una ruta específica
     public function ruta()

@@ -24,6 +24,12 @@ class EscuelaController extends Controller
             'nombre' => 'required|string',
             'codigo_minerd' => 'required|unique:escuelas',
             'raciones_estandar' => 'required|integer|min:1',
+            'director' => 'nullable|string',
+            'direccion' => 'nullable|string',
+            'rnc' => 'nullable|string',
+            'municipio' => 'nullable|string',
+            'telefono' => 'nullable|string',
+            'distrito' => 'nullable|string',
         ]);
 
         Escuela::create($validated);

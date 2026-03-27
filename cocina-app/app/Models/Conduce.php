@@ -15,6 +15,7 @@ class Conduce extends Model
     'fecha_despacho', 
     'cantidad_entregada', 
     'precio_racion', 
+    'periodo_entrega',
     'total_monto', 
     'plato_id',
     'estado'
@@ -34,5 +35,10 @@ class Conduce extends Model
 
     public function plato() {
     return $this->belongsTo(Plato::class);
+}
+public function factura()
+{
+    // Relacionamos el ID del conduce con el campo factura
+    return $this->hasOne(Factura::class, 'conduce_id');
 }
 }

@@ -15,6 +15,7 @@ export default function Login({ status, canResetPassword }) {
 
     const submit = (e) => {
         e.preventDefault();
+
         post(route('login'), {
             onFinish: () => reset('password'),
         });
@@ -22,30 +23,24 @@ export default function Login({ status, canResetPassword }) {
 
     return (
         <GuestLayout>
-            <Head title="Iniciar Sesión" />
-
-            <div className="mb-6 text-center">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">¡Hola, Chef!</h2>
-                <p className="text-sm text-gray-500">Ingresa tus credenciales para acceder a la cocina</p>
-            </div>
+            <Head title="Log in" />
 
             {status && (
-                <div className="mb-4 text-sm font-medium text-green-600 bg-green-50 p-2 rounded-lg border border-green-200">
+                <div className="mb-4 text-sm font-medium text-green-600">
                     {status}
                 </div>
             )}
 
-            <form onSubmit={submit} className="space-y-5">
+            <form onSubmit={submit}>
                 <div>
-                    <InputLabel htmlFor="email" value="Correo Electrónico" className="text-gray-700" />
+                    <InputLabel htmlFor="email" value="Email" />
 
                     <TextInput
                         id="email"
                         type="email"
                         name="email"
-                        placeholder="chef@restaurante.com"
                         value={data.email}
-                        className="mt-1 block w-full border-gray-300 focus:border-orange-500 focus:ring-orange-500 rounded-xl shadow-sm"
+                        className="mt-1 block w-full"
                         autoComplete="username"
                         isFocused={true}
                         onChange={(e) => setData('email', e.target.value)}
@@ -54,16 +49,15 @@ export default function Login({ status, canResetPassword }) {
                     <InputError message={errors.email} className="mt-2" />
                 </div>
 
-                <div>
-                    <InputLabel htmlFor="password" value="Contraseña" className="text-gray-700" />
+                <div className="mt-4">
+                    <InputLabel htmlFor="password" value="Password" />
 
                     <TextInput
                         id="password"
                         type="password"
                         name="password"
-                        placeholder="••••••••"
                         value={data.password}
-                        className="mt-1 block w-full border-gray-300 focus:border-orange-500 focus:ring-orange-500 rounded-xl shadow-sm"
+                        className="mt-1 block w-full"
                         autoComplete="current-password"
                         onChange={(e) => setData('password', e.target.value)}
                     />
@@ -71,40 +65,34 @@ export default function Login({ status, canResetPassword }) {
                     <InputError message={errors.password} className="mt-2" />
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="mt-4 block">
                     <label className="flex items-center">
                         <Checkbox
                             name="remember"
-                            className="rounded border-gray-300 text-orange-600 shadow-sm focus:ring-orange-500"
                             checked={data.remember}
-                            onChange={(e) => setData('remember', e.target.checked)}
+                            onChange={(e) =>
+                                setData('remember', e.target.checked)
+                            }
                         />
-                        <span className="ms-2 text-sm text-gray-600">Recordarme</span>
+                        <span className="ms-2 text-sm text-gray-600">
+                            Remember me
+                        </span>
                     </label>
+                </div>
 
+                <div className="mt-4 flex items-center justify-end">
                     {canResetPassword && (
                         <Link
                             href={route('password.request')}
-                            className="text-sm text-orange-600 hover:text-orange-500 font-medium underline-offset-4 hover:underline"
+                            className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                         >
-                            ¿Olvidaste tu clave?
+                            Forgot your password?
                         </Link>
                     )}
-                </div>
 
-                <div className="pt-2">
-                    <PrimaryButton 
-                        className="w-full justify-center py-3 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 focus:ring-orange-500 text-base font-bold rounded-xl transition-all shadow-lg shadow-orange-500/30" 
-                        disabled={processing}
-                    >
-                        Entrar a Cocina
+                    <PrimaryButton className="ms-4" disabled={processing}>
+                        Log in
                     </PrimaryButton>
-                </div>
-                
-                <div className="text-center mt-4">
-                    <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">
-                        Kitchen System v1.0
-                    </p>
                 </div>
             </form>
         </GuestLayout>

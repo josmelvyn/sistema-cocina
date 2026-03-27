@@ -7,6 +7,7 @@ use App\Http\Controllers\ConduceController;
 use App\Http\Controllers\RecetaController;
 use App\Http\Controllers\InsumoController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FacturaController;
 use App\Http\Controllers\ContabilidadController;
 use App\Http\Controllers\PlatoController;
 use App\Http\Controllers\SuscripcionController;
@@ -73,6 +74,11 @@ Route::middleware(['auth', CheckSubscription::class])->group(function () {
     Route::patch('/anular-conduce/{id}', [ConduceController::class, 'anular'])->name('conduces.anular');
     Route::resource('conduces', ConduceController::class);
     Route::post('/conduces/masivo', [ConduceController::class, 'generarMasivo'])->name('conduces.masivo');
+    //factura
+    Route::get('/facturas', [FacturaController::class, 'index'])->name('facturas.index');
+    Route::post('/facturar-conduce/{conduce_id}', [FacturaController::class, 'emitirFactura'])
+    ->name('facturas.emitir');
+    Route::get('/facturas/imprimir/{id}', [FacturaController::class, 'imprimir'])->name('facturas.imprimir');
     // 4. Recursos Básicos
     Route::resource('rutas', RutaController::class);
     Route::resource('escuelas', EscuelaController::class);
@@ -86,7 +92,7 @@ Route::middleware(['auth', CheckSubscription::class])->group(function () {
     // 6. Contabilidad y Gastos
     Route::get('/contabilidad', [ContabilidadController::class, 'index'])->name('contabilidad.index');
     Route::post('/gastos', [ContabilidadController::class, 'store'])->name('gastos.store');
-    
+
     // 7. Reportes
     Route::get('/rutas/{id}/reporte', [RutaController::class, 'reporte'])->name('rutas.reporte');
     Route::get('/contabilidad/reporte-escuelas', [ContabilidadController::class, 'reporteEscuelas'])->name('contabilidad.reporte_escuelas');

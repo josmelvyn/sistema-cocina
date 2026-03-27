@@ -29,6 +29,7 @@ public function store(Request $request)
         'escuela_id' => 'required|exists:escuelas,id',
         'plato_id'   => 'required|exists:platos,id', // <-- Obligatorio elegir el menú
         'fecha_despacho' => 'required|date',
+        'periodo_entrega' => 'required|string',
         'cantidad_entregada' => 'required|integer|min:1',
         'precio_racion' => 'required|numeric|min:0',
     ]);
@@ -72,13 +73,15 @@ public function store(Request $request)
         return redirect()->back();
     }
 
-    public function imprimir($id)
-    {
-        $conduce = Conduce::with('escuela.ruta')->findOrFail($id);
-        return Inertia::render('Conduces/Imprimir', [
-            'conduce' => $conduce
-        ]);
-    }
+   public function imprimir($id)
+{
+    // Agregamos 'platos' a la carga de relaciones
+    $conduce = Conduce::with(['escuela.ruta', 'plato'])->findOrFail($id);
+
+    return Inertia::render('Conduces/Imprimir', [
+        'conduce' => $conduce
+    ]);
+}
 
     public function show($id)
     {
