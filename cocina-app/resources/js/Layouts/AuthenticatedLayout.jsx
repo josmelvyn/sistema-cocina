@@ -51,6 +51,8 @@ export default function AuthenticatedLayout({ header, children }) {
                                 <NavLink href={route('insumos.index')} active={route().current('insumos.*')}>Insumos</NavLink>
                                 <NavLink href={route('recetas.index')} active={route().current('recetas.*')}>Recetas</NavLink>
                                 <NavLink href={route('conduces.index')} active={route().current('conduces.*')}>Conduces</NavLink>
+                                <NavLink href={route('facturas.index')} active={route().current('facturas.*')}>Facturacion</NavLink>
+                                 <NavLink href={route('reportes.index')} active={route().current('reportes.*')}>Reportes</NavLink>
                                 <NavLink href={route('platos.index')} active={route().current('platos.*')}>Platos</NavLink>
                                 <NavLink href={route('contabilidad.index')} active={route().current('contabilidad.*')}>Contabilidad</NavLink>
                                 
@@ -111,6 +113,7 @@ export default function AuthenticatedLayout({ header, children }) {
                         <ResponsiveNavLink href={route('conduces.index')} active={route().current('conduces.*')}>Conduces</ResponsiveNavLink>
                         <ResponsiveNavLink href={route('platos.index')} active={route().current('platos.*')}>Platos</ResponsiveNavLink>
                         <ResponsiveNavLink href={route('contabilidad.index')} active={route().current('contabilidad.*')}>Contabilidad</ResponsiveNavLink>
+                        <ResponsiveNavLink href={route('facturas.index')} active={route().current('facturas.*')}>Facturacion</ResponsiveNavLink>
                         {user.rol === 'admin' && (
                             <ResponsiveNavLink href={route('usuarios.index')} active={route().current('usuarios.*')}>Personal</ResponsiveNavLink>
                         )}

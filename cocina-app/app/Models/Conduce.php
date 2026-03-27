@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Plato;
 
 class Conduce extends Model
 {
@@ -41,4 +42,6 @@ public function factura()
     // Relacionamos el ID del conduce con el campo factura
     return $this->hasOne(Factura::class, 'conduce_id');
 }
+
+
 }

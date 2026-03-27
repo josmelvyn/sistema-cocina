@@ -254,4 +254,36 @@ public function reporteDespacho(Request $request)
         'fecha' => now()->format('d/m/Y')
     ]);
 }
+public function relacionPorCentro(Request $request, $escuelaId)
+{
+    // 1. Validamos que las fechas existan
+    $request->validate([
+        'desde' => 'required|date',
+        'hasta' => 'required|date',
+    ]);
+
+    // 2. Buscamos la escuela
+    $escuela = Escuela::with('ruta')->findOrFail($escuelaId);
+    
+    // 3. Traemos los conduces filtrados
+    $conduces = Conduce::where('escuela_id', $escuelaId)
+        ->whereBetween('fecha_despacho', [$request->desde, $request->hasta]) 
+        ->orderBy('fecha_despacho', 'asc')
+        ->get();
+
+    // 4. Retornamos a la vista de React (asegúrate de que la ruta coincida)
+    return Inertia::render('Reportes/RelacionCentro', [
+        'escuela' => $escuela,
+        'conduces' => $conduces,
+        'filtros' => $request->only(['desde', 'hasta'])
+    ]);
+}
+public function indexReportes()
+{
+    $escuelas = Escuela::orderBy('nombre', 'asc')->get();
+    
+    return Inertia::render('Reportes/Index', [
+        'escuelas' => $escuelas
+    ]);
+}
 }

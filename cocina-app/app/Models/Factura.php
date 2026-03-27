@@ -11,6 +11,8 @@ class Factura extends Model
         'ncf', 
         'tipo_ncf', 
         'fecha_vencimiento_ncf', 
+        'ncf_nota_credito',
+        'motivo_anulacion',
         'monto_total', 
         'itbis', 
         'estado'

@@ -78,7 +78,11 @@ Route::middleware(['auth', CheckSubscription::class])->group(function () {
     Route::get('/facturas', [FacturaController::class, 'index'])->name('facturas.index');
     Route::post('/facturar-conduce/{conduce_id}', [FacturaController::class, 'emitirFactura'])
     ->name('facturas.emitir');
+    Route::patch('/facturas/anular/{id}', [FacturaController::class, 'anular'])->name('facturas.anular');
     Route::get('/facturas/imprimir/{id}', [FacturaController::class, 'imprimir'])->name('facturas.imprimir');
+     Route::get('/facturas/nota-credito/{id}', [FacturaController::class, 'imprimirNotaCredito'])->name('facturas.nota_credito');
+    //Facturacion masiva
+    Route::post('/facturacion-masiva', [FacturaController::class, 'facturacionMasiva'])->name('facturas.masiva');
     // 4. Recursos Básicos
     Route::resource('rutas', RutaController::class);
     Route::resource('escuelas', EscuelaController::class);
@@ -96,6 +100,9 @@ Route::middleware(['auth', CheckSubscription::class])->group(function () {
     // 7. Reportes
     Route::get('/rutas/{id}/reporte', [RutaController::class, 'reporte'])->name('rutas.reporte');
     Route::get('/contabilidad/reporte-escuelas', [ContabilidadController::class, 'reporteEscuelas'])->name('contabilidad.reporte_escuelas');
+    Route::get('/conduces/relacion-centro/{escuelaId}', [ConduceController::class, 'relacionPorCentro'])
+    ->name('conduces.relacionCentro');
+    Route::get('/reportes', [ConduceController::class, 'indexReportes'])->name('reportes.index');
     Route::get('/contabilidad/reporte', [ContabilidadController::class, 'reporteMensual'])->name('contabilidad.reporte');
 });
 
