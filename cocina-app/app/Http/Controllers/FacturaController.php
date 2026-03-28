@@ -126,36 +126,42 @@ public function imprimir($id)
     });
 }
 //Anular Factura
-public function anular(Request $request, $id)
+public function anular($id, Request $request)
 {
     return \DB::transaction(function () use ($id, $request) {
         $factura = Factura::findOrFail($id);
         
-        // 1. Buscar secuencia de Nota de Crédito (Tipo 04)
-        $secuencia = NcfSequence::where('tipo', '04')->where('activa', true)->first();
-        
-        if (!$secuencia) {
-            return back()->withErrors(['error' => 'No hay secuencia de Notas de Crédito (B04) activa.']);
-        }
+        // 1. Buscar secuencia B04
+        $secuencia = NcfSequence::where('nombre', 'LIKE', '%Nota de Credito%')->where('activa', true)->first();
+        if (!$secuencia) abort(422, 'No hay secuencia B04 activa.');
 
-        // 2. Generar NCF de Nota de Crédito
         $ncfNotaCredito = $secuencia->prefijo . str_pad($secuencia->proximo_numero, 8, '0', STR_PAD_LEFT);
 
-        // 3. Actualizar la Factura a estado Anulada y guardar el motivo
+        // 2. FIX: LIBERAR CONDUCES PROCESANDO EL TEXTO DEL PERIODO
+        // Supongamos que periodo es "02/03/2026 A 27/03/2026"
+        $partes = explode(' A ', strtoupper($factura->periodo));
+        
+        if (count($partes) === 2) {
+            // Convertimos "02/03/2026" a "2026-03-02" para que MySQL lo entienda
+            $desde = \Carbon\Carbon::createFromFormat('d/m/Y', trim($partes[0]))->format('Y-m-d');
+            $hasta = \Carbon\Carbon::createFromFormat('d/m/Y', trim($partes[1]))->format('Y-m-d');
+
+            // Actualizamos todos los conduces de ese rango
+            \App\Models\Conduce::whereBetween('fecha_despacho', [$desde, $hasta])
+                ->where('estado', 'pagado')
+                ->update(['estado' => 'pendiente']);
+        }
+
+        // 3. Actualizar Factura
         $factura->update([
             'estado' => 'anulada',
-            'ncf_modificado' => $factura->ncf, // Guardamos cuál NCF estamos anulando
             'ncf_nota_credito' => $ncfNotaCredito,
-            'motivo_anulacion' => $request->motivo
+            'motivo_anulacion' => $request->motivo ?? 'Anulación por el usuario'
         ]);
 
-        // 4. Liberar el Conduce para que aparezca de nuevo como "Pendiente"
-        $factura->conduce->update(['estado' => 'pendiente']);
-
-        // 5. Incrementar secuencia B04
         $secuencia->increment('proximo_numero');
 
-        return back()->with('message', "Factura anulada con Nota de Crédito $ncfNotaCredito");
+        return back()->with('message', "Factura anulada y conduces liberados.");
     });
 }
     public function imprimirNotaCredito($id)

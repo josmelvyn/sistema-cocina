@@ -39,10 +39,10 @@ export default function Imprimir({ factura }) {
                 {/* DATOS DEL CLIENTE (LÍNEAS LARGAS) */}
                 <div className="text-[11px] uppercase space-y-2 mb-6">
                     <p className="border-b border-black pb-1">
-                        <span className="font-bold inline-block w-32">RNC CLIENTE:</span> {conduce.escuela?.rnc || '401-03753-4'}
+                        <span className="font-bold inline-block w-32">RNC CLIENTE:</span> {conduce.escuela?.rnc || '401-50561-4'}
                     </p>
                     <p className="border-b border-black pb-1">
-                        <span className="font-bold inline-block w-48 text-nowrap">NOMBRE O RAZON SOCIAL:</span> {conduce.escuela?.nombre || 'INSTITUTO NACIONAL DE BIENESTAR ESTUDIANTIL'}
+                        <span className="font-bold inline-block w-48 text-nowrap">NOMBRE O RAZON SOCIAL:</span> {'INSTITUTO NACIONAL DE BIENESTAR ESTUDIANTIL'}
                     </p>
                 </div>
 

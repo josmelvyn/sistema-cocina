@@ -282,8 +282,127 @@ public function indexReportes()
 {
     $escuelas = Escuela::orderBy('nombre', 'asc')->get();
     
+    // IMPORTANTE: Traer las facturas para que React las vea
+    $facturas = DB::table('facturas')
+        ->orderBy('created_at', 'desc') 
+        ->limit(10) // Traemos las 10 más recientes
+        ->get();
+    
     return Inertia::render('Reportes/Index', [
-        'escuelas' => $escuelas
+        'escuelas' => $escuelas,
+        'facturas' => $facturas // <-- Esta línea es la que llena el cuadro
     ]);
 }
+
+//Factura por periodo 
+public function facturaPeriodo(Request $request, $escuelaId)
+{
+    $escuela = Escuela::findOrFail($escuelaId);
+    
+    $conduces = Conduce::where('escuela_id', $escuelaId)
+        ->whereBetween('fecha_despacho', [$request->desde, $request->hasta])
+        ->where('estado', '!=', 'anulado')
+        ->orderBy('fecha_despacho', 'asc')
+        ->get();
+
+    return Inertia::render('Reportes/FacturaPeriodo', [
+        'escuela' => $escuela,
+        'conduces' => $conduces,
+        'filtros' => $request->only(['desde', 'hasta'])
+    ]);
+}
+
+public function facturaGlobalImprimir(Request $request)
+{
+    $request->validate(['desde' => 'required|date', 'hasta' => 'required|date']);
+
+    // 1. Preparamos la consulta base (Query)
+    $query = \App\Models\Conduce::whereBetween('fecha_despacho', [$request->desde, $request->hasta])
+        ->whereNotIn('estado', ['pagado', 'anulado']);
+
+    // 2. Comprobamos si existen registros ANTES de seguir (El Candado)
+    if (!$query->exists()) {
+        return back()->with('error', '⚠️ No hay conduces pendientes en este rango.');
+    }
+
+    // 3. AHORA SÍ definimos la variable $conduces obteniendo los datos
+    $conduces = $query->orderBy('numero_conduce', 'asc')->get();
+
+    // 4. Marcamos como PAGADOS en la base de datos
+    $query->update(['estado' => 'pagado']);
+
+    // 5. Procedemos con la secuencia NCF
+    $secuencia = \DB::table('ncf_sequences')
+        ->where('nombre', 'LIKE', '%Gurbenamental%')
+        ->where('activa', 1)
+        ->first();
+
+    if (!$secuencia) return back()->with('error', 'No hay NCF disponibles.');
+
+    // 6. Realizamos los cálculos usando la variable $conduces (que ya está definida)
+    $totalRaciones = $conduces->sum('cantidad_entregada');
+    $subtotal = $conduces->sum(fn($c) => $c->cantidad_entregada * $c->precio_racion);
+    $itbis = $subtotal * 0.18;
+    $totalGeneral = $subtotal + $itbis;
+
+    $ncfGenerado = $secuencia->prefijo . str_pad($secuencia->proximo_numero, 8, '0', STR_PAD_LEFT);
+    \DB::table('ncf_sequences')->where('id', $secuencia->id)->increment('proximo_numero');
+
+    // 7. Guardar en tabla facturas
+    \DB::table('facturas')->insert([
+        'ncf' => $ncfGenerado,
+        'periodo' => \Carbon\Carbon::parse($request->desde)->format('d/m/Y') . " A " . \Carbon\Carbon::parse($request->hasta)->format('d/m/Y'),
+        'monto_total' => $totalGeneral,
+        'itbis' => $itbis,
+        'tipo_ncf' => '15',
+        'fecha_vencimiento_ncf' => $secuencia->fecha_vencimiento,
+        'estado' => 'emitida',
+        'created_at' => now(),
+    ]);
+
+    return \Inertia\Inertia::render('Reportes/FacturaGlobalImprimir', [
+        'datos_inabie' => [
+            'nombre' => 'INSTITUTO NACIONAL DE BIENESTAR ESTUDIANTIL (INABIE)',
+            'rnc' => '401-50561-4',
+            'total_raciones' => $totalRaciones,
+            'subtotal' => $subtotal,
+            'itbis' => $itbis,
+            'total' => $totalGeneral,
+            'cant_conduces' => $conduces->count(),
+            'conduce_desde' => $conduces->first()->numero_conduce,
+            'conduce_hasta' => $conduces->last()->numero_conduce,
+            'periodo_full' => \Carbon\Carbon::parse($request->desde)->format('d/m/Y') . " A " . \Carbon\Carbon::parse($request->hasta)->format('d/m/Y')
+        ],
+        'ncf_data' => ['ncf' => $ncfGenerado, 'vencimiento' => $secuencia->fecha_vencimiento]
+    ]);
+}
+
+public function reimprimirFactura($id)
+{
+    // Buscamos la factura guardada
+    $factura = DB::table('facturas')->where('id', $id)->first();
+
+    // Como en la tabla no guardas el subtotal, lo calculamos a la inversa
+    $subtotal = $factura->monto_total - $factura->itbis;
+
+    return Inertia::render('Reportes/FacturaGlobalImprimir', [
+        'datos_inabie' => [
+            'nombre' => 'INSTITUTO NACIONAL DE BIENESTAR ESTUDIANTIL (INABIE)',
+            'rnc' => '401-50561-4',
+            'total_raciones' => 'Consolidado', // Opcional: podrías guardar esto en la tabla también
+            'subtotal' => $subtotal,
+            'itbis' => $factura->itbis,
+            'total' => $factura->monto_total
+        ],
+        'filtros' => [
+            'desde' => explode(' a ', $factura->periodo)[0] ?? '',
+            'hasta' => explode(' a ', $factura->periodo)[1] ?? ''
+        ],
+        'ncf_data' => [
+            'ncf' => $factura->ncf,
+            'vencimiento' => $factura->fecha_vencimiento_ncf
+        ]
+    ]);
+}
+
 }
