@@ -1,13 +1,30 @@
 import React, { useState } from "react";
-import { Head, router } from "@inertiajs/react";
+import { Head, router, usePage } from "@inertiajs/react"; // Añadido usePage
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 
-export default function ReportesIndex({ auth, escuelas, facturas }) { // Añadido facturas a las props
+export default function ReportesIndex({ auth, escuelas, facturas, secuencia }) {
+    // Extraemos las alertas (flash) que envía Laravel
+  const { flash } = usePage().props;
+
+// ...
+
+{/* Cambia el bloque de la alerta por este que es a prueba de errores */}
+{flash?.error && (
+    <div className="bg-red-600 text-white p-4 rounded-xl shadow-lg flex items-center gap-3 animate-pulse">
+        <span className="text-xl">⚠️</span>
+        <span className="font-bold uppercase text-xs">{flash.error}</span>
+    </div>
+)}
+
     const [data, setData] = useState({
         escuela_id: "",
         desde: "",
         hasta: "",
     });
+
+    // Cálculos para el panel de aviso NCF
+    const disponibles = secuencia ? (secuencia.numero_final - secuencia.proximo_numero + 1) : 0;
+    const proximoNcf = secuencia ? `${secuencia.prefijo}${String(secuencia.proximo_numero).padStart(8, '0')}` : '---';
 
     const imprimirFacturaGlobal = () => {
         if (!data.desde || !data.hasta) {
@@ -15,13 +32,14 @@ export default function ReportesIndex({ auth, escuelas, facturas }) { // Añadid
             return;
         }
 
-        // Confirmación para no gastar NCF por error
         if (confirm("¿Desea generar una nueva factura oficial para el INABIE? Esto consumirá un NCF.")) {
             const url = route("reportes.facturaGlobalImprimir", {
                 desde: data.desde,
                 hasta: data.hasta,
             });
             window.open(url, "_blank");
+            // Recargar para actualizar el historial y el contador NCF
+            router.reload({ only: ['facturas', 'secuencia'] });
         }
     };
 
@@ -44,13 +62,47 @@ export default function ReportesIndex({ auth, escuelas, facturas }) { // Añadid
             <div className="py-12">
                 <div className="max-w-5xl mx-auto sm:px-6 lg:px-8 space-y-8">
                     
+                    {/* ALERTAS DE ERROR / ÉXITO */}
+                    {flash.error && (
+                        <div className="bg-red-600 text-white p-4 rounded-xl shadow-lg flex items-center gap-3 animate-pulse">
+                            <span className="text-xl">⚠️</span>
+                            <span className="font-bold uppercase text-xs">{flash.error}</span>
+                        </div>
+                    )}
+
+                    {/* PANEL DE AVISO NCF (NUEVO) */}
+                    <div className="bg-slate-900 rounded-[2rem] p-8 shadow-2xl border border-slate-800 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-8 opacity-10 text-6xl italic font-black text-white">B15</div>
+                        <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
+                            <div>
+                                <h3 className="text-blue-400 text-[10px] font-bold uppercase tracking-[0.3em] mb-2">Monitor de Comprobantes Gubernamentales</h3>
+                                <p className="text-3xl font-mono text-white font-black tracking-tighter">
+                                    {proximoNcf}
+                                </p>
+                                <p className="text-[10px] text-slate-400 mt-2 font-bold uppercase">Próximo número disponible</p>
+                            </div>
+                            <div className="bg-slate-800 p-6 rounded-3xl border border-slate-700 text-center min-w-[150px]">
+                                <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Disponibles</p>
+                                <p className={`text-4xl font-black ${disponibles < 5 ? 'text-red-500 animate-bounce' : 'text-green-400'}`}>
+                                    {disponibles}
+                                </p>
+                            </div>
+                        </div>
+                        {/* Barra de progreso visual */}
+                        <div className="w-full bg-slate-800 h-1 mt-6 rounded-full overflow-hidden">
+                            <div 
+                                className={`h-full transition-all duration-1000 ${disponibles < 5 ? 'bg-red-500' : 'bg-blue-500'}`}
+                                style={{ width: `${(secuencia?.proximo_numero / secuencia?.numero_final) * 100}%` }}
+                            ></div>
+                        </div>
+                    </div>
+
                     {/* PANEL DE CONTROL PRINCIPAL */}
                     <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg p-8">
                         <h2 className="text-2xl font-bold mb-6 text-gray-800 border-b pb-4 flex items-center gap-2">
                             📦 Panel de Reportes y Facturación
                         </h2>
 
-                        {/* 1. SECCIÓN COMÚN DE FECHAS */}
                         <div className="bg-blue-50 p-6 rounded-xl mb-8 border border-blue-100">
                             <h3 className="text-blue-800 font-bold mb-4 uppercase text-[10px] tracking-widest">Paso 1: Definir Periodo</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -75,7 +127,6 @@ export default function ReportesIndex({ auth, escuelas, facturas }) { // Añadid
                             </div>
                         </div>
 
-                        {/* 2. BOTONES DE ACCIÓN */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="border rounded-xl p-6 bg-white shadow-sm border-gray-200">
                                 <h3 className="font-bold text-lg text-slate-700 mb-4">📄 Relación por Centro</h3>
@@ -111,7 +162,7 @@ export default function ReportesIndex({ auth, escuelas, facturas }) { // Añadid
                         </div>
                     </div>
 
-                    {/* 3. HISTORIAL DE FACTURAS (REIMPRESIÓN) */}
+                    {/* HISTORIAL DE FACTURAS */}
                     <div className="bg-white shadow-sm sm:rounded-lg p-8">
                         <h3 className="text-lg font-bold mb-5 text-slate-800 flex items-center gap-2 border-b pb-4">
                             🕒 Historial de Facturas (INABIE)
@@ -154,7 +205,6 @@ export default function ReportesIndex({ auth, escuelas, facturas }) { // Añadid
                             </table>
                         </div>
                     </div>
-
                 </div>
             </div>
         </AuthenticatedLayout>

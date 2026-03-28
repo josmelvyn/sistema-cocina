@@ -282,18 +282,24 @@ public function indexReportes()
 {
     $escuelas = Escuela::orderBy('nombre', 'asc')->get();
     
-    // IMPORTANTE: Traer las facturas para que React las vea
+    // 1. BUSCAMOS LA SECUENCIA ACTIVA (Añade esto)
+    $secuencia = DB::table('ncf_sequences')
+        ->where('nombre', 'LIKE', '%Gurbenamental%') // Verifica que se escriba así en tu BD
+        ->where('activa', 1)
+        ->first();
+
+    // 2. Traemos las facturas
     $facturas = DB::table('facturas')
         ->orderBy('created_at', 'desc') 
-        ->limit(10) // Traemos las 10 más recientes
+        ->limit(10)
         ->get();
     
     return Inertia::render('Reportes/Index', [
         'escuelas' => $escuelas,
-        'facturas' => $facturas // <-- Esta línea es la que llena el cuadro
+        'facturas' => $facturas,
+        'secuencia' => $secuencia // <--- ¡ESTA ES LA PIEZA QUE FALTA!
     ]);
 }
-
 //Factura por periodo 
 public function facturaPeriodo(Request $request, $escuelaId)
 {
@@ -328,8 +334,6 @@ public function facturaGlobalImprimir(Request $request)
     // 3. AHORA SÍ definimos la variable $conduces obteniendo los datos
     $conduces = $query->orderBy('numero_conduce', 'asc')->get();
 
-    // 4. Marcamos como PAGADOS en la base de datos
-    $query->update(['estado' => 'pagado']);
 
     // 5. Procedemos con la secuencia NCF
     $secuencia = \DB::table('ncf_sequences')
@@ -338,6 +342,13 @@ public function facturaGlobalImprimir(Request $request)
         ->first();
 
     if (!$secuencia) return back()->with('error', 'No hay NCF disponibles.');
+
+      if ($secuencia->proximo_numero > $secuencia->numero_final) {
+        return back()->with('error', '❌ Se ha agotado el rango de NCF B15. El último número permitido era el ' . $secuencia->numero_final . '. Por favor, solicite una nueva secuencia a la DGII.');
+    }
+
+        // 4. Marcamos como PAGADOS en la base de datos
+    $query->update(['estado' => 'pagado']);
 
     // 6. Realizamos los cálculos usando la variable $conduces (que ya está definida)
     $totalRaciones = $conduces->sum('cantidad_entregada');
@@ -379,24 +390,40 @@ public function facturaGlobalImprimir(Request $request)
 
 public function reimprimirFactura($id)
 {
-    // Buscamos la factura guardada
+    // 1. Buscamos la factura grabada
     $factura = DB::table('facturas')->where('id', $id)->first();
 
-    // Como en la tabla no guardas el subtotal, lo calculamos a la inversa
-    $subtotal = $factura->monto_total - $factura->itbis;
+    if (!$factura) return back()->with('error', 'Factura no encontrada.');
+
+    // 2. Extraemos las fechas del texto "01/03/2026 A 31/03/2026" para recuperar los datos reales
+    $partes = explode(' A ', strtoupper($factura->periodo));
+    
+    // Recuperamos los conduces de ese periodo para rellenar los datos que faltan en la tabla facturas
+    $desde = \Carbon\Carbon::createFromFormat('d/m/Y', trim($partes[0]))->format('Y-m-d');
+    $hasta = \Carbon\Carbon::createFromFormat('d/m/Y', trim($partes[1]))->format('Y-m-d');
+    
+    $conduces = Conduce::whereBetween('fecha_despacho', [$desde, $hasta])
+        ->where('estado', '!=', 'anulado')
+        ->orderBy('numero_conduce', 'asc')
+        ->get();
+
+    // 3. Montamos el objeto EXACTAMENTE igual al de la factura Global
+    $subtotal = (float)$factura->monto_total - (float)$factura->itbis;
 
     return Inertia::render('Reportes/FacturaGlobalImprimir', [
         'datos_inabie' => [
             'nombre' => 'INSTITUTO NACIONAL DE BIENESTAR ESTUDIANTIL (INABIE)',
             'rnc' => '401-50561-4',
-            'total_raciones' => 'Consolidado', // Opcional: podrías guardar esto en la tabla también
+            'total_raciones' => $conduces->sum('cantidad_entregada') ?: 0, 
             'subtotal' => $subtotal,
-            'itbis' => $factura->itbis,
-            'total' => $factura->monto_total
-        ],
-        'filtros' => [
-            'desde' => explode(' a ', $factura->periodo)[0] ?? '',
-            'hasta' => explode(' a ', $factura->periodo)[1] ?? ''
+            'itbis' => (float)$factura->itbis,
+            'total' => (float)$factura->monto_total,
+            'cant_conduces' => $conduces->count() ?: 'VARIOS',
+            'conduce_desde' => $conduces->first()->numero_conduce ?? '---',
+            'conduce_hasta' => $conduces->last()->numero_conduce ?? '---',
+            'periodo_texto' => $factura->periodo, 
+            'periodo_full' => $factura->periodo 
+        
         ],
         'ncf_data' => [
             'ncf' => $factura->ncf,
@@ -404,5 +431,6 @@ public function reimprimirFactura($id)
         ]
     ]);
 }
+
 
 }
