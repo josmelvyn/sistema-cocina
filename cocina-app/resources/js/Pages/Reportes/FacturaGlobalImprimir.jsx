@@ -1,7 +1,8 @@
 import React, { useEffect } from "react";
-import { Head } from "@inertiajs/react";
+import { Head, usePage } from "@inertiajs/react";
 
 export default function FacturaGlobalImprimir({ datos_inabie, ncf_data }) {
+    const { empresa } = usePage().props.auth;
     useEffect(() => { 
         if (datos_inabie) setTimeout(() => window.print(), 500); 
     }, [datos_inabie]);
@@ -17,12 +18,12 @@ export default function FacturaGlobalImprimir({ datos_inabie, ncf_data }) {
                 {/* CABECERA */}
                 <div className="flex justify-between items-start mb-6">
                     <div className="w-2/3 leading-tight">
-                        <h1 className="text-lg font-bold">YDELSA MARIANA COLON BAUTISTA</h1>
+                        <h1 className="text-lg font-bold">{empresa?.nombre_empresa || 'YDELSA MARIANA COLON BAUTISTA'}</h1>
                         <p className="text-[10px] leading-tight">
-                            AV. HERMANOS MORENO MARTINEZ ESQ. TRINITARIA, LAS CEJAS, SFM<br/>
-                            Tel: 809-345-4022 / 809-588-4407, E-Mail: ydelsa3@hotmail.com</p>
+                            {empresa?.direccion || 'AV. HERMANOS MORENO MARTINEZ ESQ. TRINITARIA, LAS CEJAS, SFM'}<br/>
+                            Tel: {empresa?.telefono || '809-345-4022 / 809-588-4407'}, E-Mail: {empresa?.email || 'ydelsa3@hotmail.com'}</p>
                         
-                        <p className="text-[11px] font-bold mt-1">RNC: 058-0079732-7</p>
+                        <p className="text-[11px] font-bold mt-1">RNC: {empresa?.rnc || '058-0079732-7'}</p>
                         <p className="text-[11px] font-bold">FECHA: {new Date().toLocaleDateString('es-DO')}</p>
                     </div>
                     <div className="text-right uppercase">

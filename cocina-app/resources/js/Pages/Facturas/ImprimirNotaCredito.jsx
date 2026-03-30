@@ -1,7 +1,8 @@
 import React, { useEffect } from "react";
-import { Head } from "@inertiajs/react";
+import { Head, usePage } from "@inertiajs/react";
 
 export default function ImprimirNotaCredito({ factura }) {
+    const { empresa } = usePage().props.auth;
     useEffect(() => {
         setTimeout(() => window.print(), 500);
     }, []);
@@ -18,8 +19,8 @@ export default function ImprimirNotaCredito({ factura }) {
                 {/* ENCABEZADO */}
                 <div className="flex justify-between items-start mb-6">
                     <div className="w-2/3">
-                        <h1 className="text-lg font-bold">YDELSA MARIANA COLON BAUTISTA</h1>
-                        <p className="text-[10px]">RNC: 058-0079732-7</p>
+                        <h1 className="text-lg font-bold">{empresa?.nombre_empresa || 'YDELSA MARIANA COLON BAUTISTA'}</h1>
+                        <p className="text-[10px]">RNC: {empresa?.rnc || '058-0079732-7'}</p>
                         <p className="text-[11px] font-bold mt-4">NOTA DE CRÉDITO</p>
                     </div>
                     <div className="text-right">

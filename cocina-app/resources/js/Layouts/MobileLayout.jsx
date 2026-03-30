@@ -162,6 +162,7 @@ export default function MobileLayout({ children, title, headerTitle, headerSubti
                 <BottomLink href={route('rutas.index')} icon="🚚" label="Rutas" active={route().current('rutas.*')} />
                 <BottomLink href={route('conduces.index')} icon="📝" label="Despachos" active={route().current('conduces.*')} />
                 <BottomLink href={route('insumos.index')} icon="🏭" label="Insumos" active={route().current('insumos.*')} />
+                <BottomLink href={route('configuracion.index')} icon="⚙️" label="Config" active={route().current('configuracion.*')} />
             </nav>
         </div>
     );

@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 
 export default function RelacionGeneral({ conduces, filtros }) {
+    const { empresa } = usePage().props.auth;
     // Cálculo de raciones totales
     const totalRaciones = conduces.reduce((acc, c) => acc + (Number(c.cantidad_entregada) || 0), 0);
 
@@ -13,10 +14,10 @@ export default function RelacionGeneral({ conduces, filtros }) {
                 
                 {/* ENCABEZADO OFICIAL */}
                 <div className="text-center mb-4 leading-tight">
-                    <h1 className="text-lg font-bold">YDELSA MARIANA COLON BAUTISTA</h1>
-                    <p className="text-[9px]">AV. HERMANOS MORENO MARTINEZ ESQ. TRINITARIA, LAS CEJAS, SAN FCO. DE MACORIS</p>
-                    <p className="text-[9px]">Tel: 809-345-4022 / 809-588-4407 · E-Mail: ydelsa3@hotmail.com</p>
-                    <p className="text-[9px] font-bold">RNC: 058-0079732-7</p>
+                    <h1 className="text-lg font-bold">{empresa?.nombre_empresa || 'YDELSA MARIANA COLON BAUTISTA'}</h1>
+                    <p className="text-[9px]">{empresa?.direccion || 'AV. HERMANOS MORENO MARTINEZ ESQ. TRINITARIA, LAS CEJAS, SAN FCO. DE MACORIS'}</p>
+                    <p className="text-[9px]">Tel: {empresa?.telefono || '809-345-4022 / 809-588-4407'} · E-Mail: {empresa?.email || 'ydelsa3@hotmail.com'}</p>
+                    <p className="text-[9px] font-bold">RNC: {empresa?.rnc || '058-0079732-7'}</p>
                     <h2 className="text-md font-bold mt-4">RELACIÓN DE CONDUCES GENERAL</h2>
                     <p className="font-bold underline">Desde: {filtros.desde} Hasta: {filtros.hasta}</p>
                 </div>

@@ -125,6 +125,9 @@ Route::middleware(['auth', CheckSubscription::class])->group(function () {
     //facturacion global
     Route::get('/reportes/factura-global-imprimir', [ConduceController::class, 'facturaGlobalImprimir'])
     ->name('reportes.facturaGlobalImprimir');
+    Route::get('/configuracion', [\App\Http\Controllers\ConfiguracionController::class, 'index'])->name('configuracion.index');
+    Route::post('/configuracion', [\App\Http\Controllers\ConfiguracionController::class, 'update'])->name('configuracion.update');
+
     Route::get('/reportes/relacion-general', [ConduceController::class, 'relacionGeneral'])->name('reportes.relacionGeneral');
 
     });

@@ -1,7 +1,8 @@
 import React, { useEffect } from "react";
-import { Head } from "@inertiajs/react";
+import { Head, usePage } from "@inertiajs/react";
 
 export default function Imprimir({ conduce }) {
+    const { empresa } = usePage().props.auth;
     useEffect(() => {
         const timer = setTimeout(() => window.print(), 500);
         return () => clearTimeout(timer);
@@ -15,10 +16,10 @@ export default function Imprimir({ conduce }) {
                 
                 {/* ENCABEZADO CENTRAL */}
                 <div className="text-center mb-10 uppercase">
-                    <h1 className="text-xl font-bold">YDELSA MARIANA COLON BAUTISTA</h1>
-                    <p className="text-[10px] tracking-tight">AV. HERMANOS MORENO MARTINEZ ESQ. TRINITARIA, LAS CEJAS, SAN FCO. DE MACORIS</p>
-                    <p className="text-[10px]">Tel.: 809-345-4022 / 809-588-4407. E-mail: ydelsa3@hotmail.com</p>
-                    <p className="text-[11px] font-bold mt-1">RNC: 058-0079732-7</p>
+                    <h1 className="text-xl font-bold">{empresa?.nombre_empresa || 'YDELSA MARIANA COLON BAUTISTA'}</h1>
+                    <p className="text-[10px] tracking-tight">{empresa?.direccion || 'AV. HERMANOS MORENO MARTINEZ ESQ. TRINITARIA, LAS CEJAS, SAN FCO. DE MACORIS'}</p>
+                    <p className="text-[10px]">Tel.: {empresa?.telefono || '809-345-4022 / 809-588-4407'}. E-mail: {empresa?.email || 'ydelsa3@hotmail.com'}</p>
+                    <p className="text-[11px] font-bold mt-1">RNC: {empresa?.rnc || '058-0079732-7'}</p>
                 </div>
 
                {/* BLOQUE DE DATOS SUPERIOR (DINÁMICO) */}

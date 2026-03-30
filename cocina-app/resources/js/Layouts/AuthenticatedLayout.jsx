@@ -63,6 +63,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                         <NavLink href={route('reportes.index')} active={route().current('reportes.*')}>Reportes/Facturacion</NavLink>
                                         <NavLink href={route('contabilidad.index')} active={route().current('contabilidad.*')}>Contabilidad</NavLink>
                                         <NavLink href={route('conduces.index')} active={route().current('conduces.*')}>Conduces</NavLink>
+                                        <NavLink href={route('configuracion.index')} active={route().current('configuracion.*')}>Configuración</NavLink>
                                     </>
                                 )}
                                
@@ -119,7 +120,10 @@ export default function AuthenticatedLayout({ header, children }) {
                         <ResponsiveNavLink href={route('contabilidad.index')} active={route().current('contabilidad.*')}>Contabilidad</ResponsiveNavLink>
                         <ResponsiveNavLink href={route('facturas.index')} active={route().current('facturas.*')}>Facturacion</ResponsiveNavLink>
                         {user.rol === 'admin' && (
-                            <ResponsiveNavLink href={route('usuarios.index')} active={route().current('usuarios.*')}>Personal</ResponsiveNavLink>
+                            <>
+                                <ResponsiveNavLink href={route('usuarios.index')} active={route().current('usuarios.*')}>Personal</ResponsiveNavLink>
+                                <ResponsiveNavLink href={route('configuracion.index')} active={route().current('configuracion.*')}>Configuración</ResponsiveNavLink>
+                            </>
                         )}
                     </div>
                 </div>
