@@ -159,7 +159,7 @@ export default function Index({ auth, conduces, escuelas, platos, rutas }) {
             <MobileLayout title="Despachos" headerTitle="Despachos" headerSubtitle="Gestión Diaria">
                 <div className="p-4 space-y-6">
                     {/* ACCIÓN MASIVA */}
-                    {seleccionados.length > 0 && (
+                    {seleccionados.length > 0 && auth.user.rol !== 'chofer' && (
                         <div className="bg-indigo-600 p-4 rounded-3xl mb-4 flex justify-between items-center shadow-2xl animate-in fade-in sticky top-20 z-40">
                             <div className="flex items-center gap-3">
                                 <div className="bg-white text-indigo-600 w-8 h-8 rounded-full flex items-center justify-center font-black">
@@ -176,11 +176,12 @@ export default function Index({ auth, conduces, escuelas, platos, rutas }) {
                         </div>
                     )}
 
-                    {/* REGISTRO MANUAL */}
-                    <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
-                        <h3 className="text-sm font-black text-slate-800 uppercase mb-4 flex items-center gap-2">
-                            <span>📝</span> {editando ? "Editar Despacho" : "Nuevo Despacho"}
-                        </h3>
+                    {/* REGISTRO MANUAL - Solo visible para Administradores o en Escritorio */}
+                    {auth.user.rol !== 'chofer' && (
+                        <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
+                            <h3 className="text-sm font-black text-slate-800 uppercase mb-4 flex items-center gap-2">
+                                <span>📝</span> {editando ? "Editar Despacho" : "Nuevo Despacho"}
+                            </h3>
                         <form onSubmit={submitIndividual} className="space-y-4">
                             <div>
                                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Escuela Destino</label>
@@ -275,8 +276,9 @@ export default function Index({ auth, conduces, escuelas, platos, rutas }) {
                                     Cancelar Edición
                                 </button>
                             )}
-                        </form>
-                    </div>
+                            </form>
+                        </div>
+                    )}
 
                     {/* HISTORIAL */}
                     <div>
@@ -323,8 +325,36 @@ export default function Index({ auth, conduces, escuelas, platos, rutas }) {
                                         </div>
                                         
                                         <div className="flex gap-1.5">
+                                            {/* HERRAMIENTA DE ENTREGA PARA EL CHOFER */}
+                                            {c.estado === 'pendiente' && !editando && (
+                                                <button 
+                                                    onClick={() => {
+                                                        const lat = formIndividual.data.entrega_latitud;
+                                                        const lon = formIndividual.data.entrega_longitud;
+                                                        const foto = formIndividual.data.foto_evidencia;
+
+                                                        if (!lat || !lon || !foto) {
+                                                            alert("⚠️ Primero captura el GPS y la Foto arriba (en herramientas de entrega) para este conduce.");
+                                                            // Permitimos que el admin use el form de arriba, pero para el chofer
+                                                            // necesitamos que capture la evidencia.
+                                                            // Como ocultamos el form de arriba para el chofer, 
+                                                            // vamos a mover los botones de captura AQUÍ dentro si es chofer.
+                                                        } else {
+                                                            router.patch(route("conduces.entregar", c.id), {
+                                                                entrega_latitud: lat,
+                                                                entrega_longitud: lon,
+                                                                foto_evidencia: foto
+                                                            });
+                                                        }
+                                                    }}
+                                                    className="bg-indigo-600 text-white px-3 py-1 rounded-lg text-[9px] font-black uppercase"
+                                                >
+                                                    Entregar
+                                                </button>
+                                            )}
+
                                             <a href={route("conduces.imprimir", c.id)} target="_blank" className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-95 transition-transform text-xs border border-slate-200 shadow-sm">🖨️</a>
-                                            {c.estado === 'pendiente' && (
+                                            {auth.user.rol !== 'chofer' && c.estado === 'pendiente' && (
                                                 <>
                                                     <button onClick={() => { setEditando(true); setIdEdicion(c.id); formIndividual.setData(c); window.scrollTo({top:0, behavior:'smooth'}); }} className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 active:scale-95 transition-transform text-xs border border-orange-100 shadow-sm">📝</button>
                                                     <button onClick={() => handleAnular(c.id)} className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-red-500 active:scale-95 transition-transform text-xs border border-red-100 shadow-sm">🚫</button>
@@ -332,6 +362,51 @@ export default function Index({ auth, conduces, escuelas, platos, rutas }) {
                                             )}
                                         </div>
                                     </div>
+
+                                    {/* PANEL DE CAPTURA PARA CHOFER (Si está pendiente) */}
+                                    {c.estado === 'pendiente' && (
+                                        <div className="mt-4 p-3 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (navigator.geolocation) {
+                                                            navigator.geolocation.getCurrentPosition((pos) => {
+                                                                formIndividual.setData(prev => ({
+                                                                    ...prev,
+                                                                    entrega_latitud: pos.coords.latitude,
+                                                                    entrega_longitud: pos.coords.longitude
+                                                                }));
+                                                                alert("📍 GPS OK");
+                                                            });
+                                                        }
+                                                    }}
+                                                    className={`h-9 rounded-lg text-[8px] font-black uppercase flex items-center justify-center gap-1 ${formIndividual.data.entrega_latitud ? 'bg-emerald-100 text-emerald-700' : 'bg-white border border-slate-200 text-slate-600'}`}
+                                                >
+                                                    📍 GPS
+                                                </button>
+                                                <label className={`h-9 rounded-lg text-[8px] font-black uppercase flex items-center justify-center gap-1 cursor-pointer ${formIndividual.data.foto_evidencia ? 'bg-emerald-100 text-emerald-700' : 'bg-white border border-slate-200 text-slate-600'}`}>
+                                                    <input type="file" accept="image/*" capture="camera" className="hidden" onChange={e => formIndividual.setData("foto_evidencia", e.target.files[0])} />
+                                                    📸 FOTO
+                                                </label>
+                                            </div>
+                                            {(formIndividual.data.entrega_latitud && formIndividual.data.foto_evidencia) && (
+                                                <button 
+                                                    onClick={() => {
+                                                        formIndividual.patch(route("conduces.entregar", c.id), {
+                                                            onSuccess: () => {
+                                                                alert("¡Despacho completado!");
+                                                                formIndividual.reset();
+                                                            }
+                                                        });
+                                                    }}
+                                                    className="w-full mt-2 h-9 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase animate-bounce"
+                                                >
+                                                    🚀 Confirmar Despacho
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             )) : (
                                 <div className="text-center p-8 bg-white rounded-3xl border border-dashed border-slate-200">
@@ -364,7 +439,7 @@ export default function Index({ auth, conduces, escuelas, platos, rutas }) {
         >
             <Head title="Conduces" />
             {/* BOTÓN FLOTANTE DE ACCIÓN MASIVA */}
-            {seleccionados.length > 0 && (
+            {seleccionados.length > 0 && auth.user.rol !== 'chofer' && (
                 <div className="bg-blue-600 p-4 rounded-2xl mb-6 flex justify-between items-center shadow-2xl border border-blue-400 sticky top-4 z-50 animate-in fade-in slide-in-from-top-4 duration-300">
                     <div className="flex items-center gap-4 px-2">
                         <div className="bg-white text-blue-600 w-8 h-8 rounded-full flex items-center justify-center font-black text-sm shadow-inner">
@@ -391,7 +466,8 @@ export default function Index({ auth, conduces, escuelas, platos, rutas }) {
             <div className="py-8 bg-slate-50 min-h-screen">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
                     {/* PANEL DE AUTOCONDUCE */}
-                    <div className="bg-slate-900 rounded-[2.5rem] p-8 shadow-2xl border border-slate-800 relative overflow-hidden">
+                    {auth.user.rol !== 'chofer' && (
+                        <div className="bg-slate-900 rounded-[2.5rem] p-8 shadow-2xl border border-slate-800 relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-8 opacity-10 text-6xl italic font-black text-white">
                             AUTO
                         </div>
@@ -515,8 +591,10 @@ export default function Index({ auth, conduces, escuelas, platos, rutas }) {
                             </button>
                         </form>
                     </div>
+                    )}
                     {/* REGISTRO MANUAL */}
-                    <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100">
+                    {auth.user.rol !== 'chofer' && (
+                        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100">
                         <form
                             onSubmit={submitIndividual}
                             className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end"
@@ -619,6 +697,7 @@ export default function Index({ auth, conduces, escuelas, platos, rutas }) {
                             </button>
                         </form>
                     </div>
+                    )}
                     {/* TABLA DE ACTIVIDAD */}
                     <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
                         <table className="w-full text-sm">
@@ -711,7 +790,7 @@ export default function Index({ auth, conduces, escuelas, platos, rutas }) {
                                             >
                                                 🖨️
                                             </a>
-                                            {c.estado === "pendiente" && (
+                                            {c.estado === "pendiente" && auth.user.rol !== 'chofer' && (
                                                 <>
                                                     <button
                                                         onClick={() => {

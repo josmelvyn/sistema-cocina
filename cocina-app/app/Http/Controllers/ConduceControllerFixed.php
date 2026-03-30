@@ -25,9 +25,6 @@ class ConduceController extends Controller
 
 public function store(Request $request)
 {
-    if (auth()->user()->rol === 'chofer') {
-        return redirect()->back()->with('error', 'No tienes permiso para crear conduces.');
-    }
     $validated = $request->validate([
         'escuela_id' => 'required|exists:escuelas,id',
         'plato_id'   => 'required|exists:platos,id',
@@ -76,9 +73,6 @@ public function store(Request $request)
 
     public function pagar($id)
     {
-        if (auth()->user()->rol === 'chofer') {
-            return redirect()->back()->with('error', 'No tienes permiso para realizar esta acción.');
-        }
         $conduce = Conduce::findOrFail($id);
         $conduce->update(['estado' => 'pagado']);
         return redirect()->back();
@@ -99,9 +93,6 @@ public function store(Request $request)
 
     public function anular(Request $request, $id)
 {
-    if (auth()->user()->rol === 'chofer') {
-        return redirect()->back()->with('error', 'No tienes permiso para anular conduces.');
-    }
     $request->validate(['motivo' => 'required|string|min:5']);
 
     return \Illuminate\Support\Facades\DB::transaction(function () use ($request, $id) {
@@ -138,9 +129,6 @@ public function store(Request $request)
 
 public function update(Request $request, $id)
 {
-    if (auth()->user()->rol === 'chofer') {
-        return redirect()->back()->with('error', 'No tienes permiso para editar conduces.');
-    }
     $validated = $request->validate([
         'escuela_id' => 'required|exists:escuelas,id',
         'plato_id' => 'required|exists:platos,id',
@@ -173,9 +161,6 @@ public function update(Request $request, $id)
 
 public function generarMasivo(Request $request)
 {
-    if (auth()->user()->rol === 'chofer') {
-        return redirect()->back()->with('error', 'No tienes permiso para generar conduces masivos.');
-    }
     $validated = $request->validate([
         'ruta_id'  => 'required',
         'plato_id' => 'required',

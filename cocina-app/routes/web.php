@@ -87,6 +87,7 @@ Route::middleware(['auth', CheckSubscription::class])->group(function () {
     Route::patch('/anular-conduce/{id}', [ConduceController::class, 'anular'])->name('conduces.anular');
     Route::resource('conduces', ConduceController::class);
     Route::post('/conduces/masivo', [ConduceController::class, 'generarMasivo'])->name('conduces.masivo');
+    Route::patch('/conduces/{id}/entregar', [ConduceController::class, 'completarEntrega'])->name('conduces.entregar');
     //factura
     Route::get('/facturas', [FacturaController::class, 'index'])->name('facturas.index');
     Route::post('/facturar-conduce/{conduce_id}', [FacturaController::class, 'emitirFactura'])
