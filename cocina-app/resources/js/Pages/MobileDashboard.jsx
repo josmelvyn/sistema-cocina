@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useState } from 'react';
 import { db } from '../db';
 import MobileLayout from '@/Layouts/MobileLayout';
+import MapComponent from '@/Components/MapComponent';
 
 export default function MobileDashboard({ auth, stats: serverStats, insumos_bajos: serverInsumos, ultimos_conduces: serverConduces, platos, escuelas }) {
     
@@ -104,6 +105,17 @@ export default function MobileDashboard({ auth, stats: serverStats, insumos_bajo
                         <Shortcut href={route('rutas.index')} icon="🚚" label="Rutas" bg="bg-blue-100" text="text-blue-700" />
                         <Shortcut href={route('platos.index')} icon="🍲" label="Menú" bg="bg-orange-100" text="text-orange-700" />
                         <Shortcut href={route('insumos.index')} icon="📦" label="Almacén" bg="bg-slate-200" text="text-slate-700" />
+                    </div>
+                </div>
+
+                {/* MAPA DE COBERTURA */}
+                <div>
+                    <h3 className="text-sm font-extrabold text-slate-800 mb-3 uppercase tracking-wider pl-1 font-black">Mapa de Cobertura</h3>
+                    <div className="bg-white p-3 rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
+                        <MapComponent escuelas={escuelas} />
+                        <p className="text-[10px] text-slate-400 font-bold mt-3 text-center uppercase tracking-widest leading-none">
+                            Toca los puntos para ver detalles del centro
+                        </p>
                     </div>
                 </div>
 

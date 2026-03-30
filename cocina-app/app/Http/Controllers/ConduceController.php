@@ -32,15 +32,25 @@ public function store(Request $request)
         'periodo_entrega' => 'required|string',
         'cantidad_entregada' => 'required|integer|min:1',
         'precio_racion' => 'required|numeric|min:0',
+        'entrega_latitud' => 'nullable|numeric',
+        'entrega_longitud' => 'nullable|numeric',
+        'foto_evidencia' => 'nullable|image|max:2048',
     ]);
 
-    return \Illuminate\Support\Facades\DB::transaction(function () use ($validated) {
+    return \Illuminate\Support\Facades\DB::transaction(function () use ($validated, $request) {
+        // Manejo de Foto
+        $fotoPath = null;
+        if ($request->hasFile('foto_evidencia')) {
+            $fotoPath = $request->file('foto_evidencia')->store('evidencias', 'public');
+        }
+
         // 1. Crear Conduce
         $numero = 'CON-' . date('Ymd') . '-' . (Conduce::count() + 1);
         $conduce = Conduce::create(array_merge($validated, [
             'numero_conduce' => $numero,
             'total_monto' => $validated['cantidad_entregada'] * $validated['precio_racion'],
-            'estado' => 'pendiente'
+            'estado' => 'pendiente',
+            'foto_evidencia' => $fotoPath,
         ]));
 
         // 2. DESCUENTO PRO: Solo ingredientes del plato seleccionado

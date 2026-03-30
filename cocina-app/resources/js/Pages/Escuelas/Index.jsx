@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import MobileLayout from "@/Layouts/MobileLayout";
 import { Head, useForm, usePage } from "@inertiajs/react";
+import MapComponent from "@/Components/MapComponent";
 
 export default function Index({ auth, escuelas, rutas }) {
     const { isMobile } = usePage().props;
@@ -18,6 +19,8 @@ export default function Index({ auth, escuelas, rutas }) {
         telefono: "", // Nuevo
         distrito: "", // Nuevo
         rnc: "",
+        latitud: "",
+        longitud: "",
     });
 
     const submit = (e) => {
@@ -99,6 +102,26 @@ export default function Index({ auth, escuelas, rutas }) {
                                 <div>
                                     <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Dirección</label>
                                     <input type="text" value={data.direccion} onChange={e => setData("direccion", e.target.value)} className="w-full bg-slate-50 border-slate-100 rounded-xl mt-1 h-12 text-sm" />
+                                </div>
+                                <div className="p-1">
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Ubicación en Mapa</label>
+                                    <MapComponent 
+                                        escuelas={escuelas} 
+                                        selectedLocation={data.latitud ? { lat: parseFloat(data.latitud), lng: parseFloat(data.longitud) } : null}
+                                        onSelectLocation={(latlng) => {
+                                            setData(prev => ({ ...prev, latitud: latlng.lat.toFixed(6), longitud: latlng.lng.toFixed(6) }));
+                                        }}
+                                    />
+                                    <div className="grid grid-cols-2 gap-2 mt-2">
+                                        <div className="bg-slate-50 p-2 rounded-lg text-center">
+                                            <p className="text-[8px] text-slate-400 uppercase font-black">LAT</p>
+                                            <p className="text-[10px] font-mono font-black">{data.latitud || '---'}</p>
+                                        </div>
+                                        <div className="bg-slate-50 p-2 rounded-lg text-center">
+                                            <p className="text-[8px] text-slate-400 uppercase font-black">LNG</p>
+                                            <p className="text-[10px] font-mono font-black">{data.longitud || '---'}</p>
+                                        </div>
+                                    </div>
                                 </div>
                                 <button disabled={processing} className="w-full h-12 bg-indigo-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-indigo-600/30 active:scale-95 transition-transform mt-2">
                                     {processing ? "Guardando..." : "Guardar Escuela"}
@@ -345,6 +368,47 @@ export default function Index({ auth, escuelas, rutas }) {
                                         }
                                         className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                                     />
+                                </div>
+
+                                {/* Mapa en Desktop */}
+                                <div className="md:col-span-3">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Ubicación Geográfica (Haz clic en el mapa para marcar)
+                                    </label>
+                                    <div className="grid grid-cols-4 gap-4">
+                                        <div className="col-span-3">
+                                             <MapComponent 
+                                                escuelas={escuelas} 
+                                                selectedLocation={data.latitud ? { lat: parseFloat(data.latitud), lng: parseFloat(data.longitud) } : null}
+                                                onSelectLocation={(latlng) => {
+                                                    setData(prev => ({ ...prev, latitud: latlng.lat.toFixed(6), longitud: latlng.lng.toFixed(6) }));
+                                                }}
+                                            />
+                                        </div>
+                                        <div className="col-span-1 space-y-4">
+                                            <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                                                <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Latitud</p>
+                                                <input 
+                                                    type="text" 
+                                                    value={data.latitud} 
+                                                    onChange={e => setData('latitud', e.target.value)}
+                                                    className="w-full bg-white border-blue-100 rounded-lg text-sm font-mono font-bold text-blue-800"
+                                                />
+                                            </div>
+                                            <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                                                <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-1">Longitud</p>
+                                                <input 
+                                                    type="text" 
+                                                    value={data.longitud} 
+                                                    onChange={e => setData('longitud', e.target.value)}
+                                                    className="w-full bg-white border-indigo-100 rounded-lg text-sm font-mono font-bold text-indigo-800"
+                                                />
+                                            </div>
+                                            <p className="text-[10px] text-slate-400 italic">
+                                                * El chofer podrá usar estas coordenadas para llegar usando GPS.
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 

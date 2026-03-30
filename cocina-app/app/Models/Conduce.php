@@ -12,14 +12,17 @@ class Conduce extends Model
 
     protected $fillable = [
         'numero_conduce', 
-    'escuela_id', 
-    'fecha_despacho', 
-    'cantidad_entregada', 
-    'precio_racion', 
-    'periodo_entrega',
-    'total_monto', 
-    'plato_id',
-    'estado'
+        'escuela_id', 
+        'fecha_despacho', 
+        'cantidad_entregada', 
+        'precio_racion', 
+        'periodo_entrega',
+        'total_monto', 
+        'plato_id',
+        'estado',
+        'entrega_latitud',
+        'entrega_longitud',
+        'foto_evidencia'
     ];
 
     // El conduce pertenece a una escuela

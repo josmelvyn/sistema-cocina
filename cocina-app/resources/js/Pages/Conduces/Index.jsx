@@ -31,6 +31,9 @@ export default function Index({ auth, conduces, escuelas, platos, rutas }) {
         periodo_entrega: periodoDefault, // <--- NUEVO CAMPO FIX
         cantidad_entregada: "",
         precio_racion: "",
+        entrega_latitud: "",
+        entrega_longitud: "",
+        foto_evidencia: null,
     });
 
     // 2. Formulario de Autoconduce (Masivo por Ruta)
@@ -212,6 +215,58 @@ export default function Index({ auth, conduces, escuelas, platos, rutas }) {
                                     </div>
                                 </div>
                             </div>
+                            
+                            {/* EVIDENCIA GPS & FOTO (Solo Móvil) */}
+                            {isMobile && (
+                                <div className="space-y-4 p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                                    <div className="flex justify-between items-center">
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Prueba de Entrega</p>
+                                        {(formIndividual.data.entrega_latitud && formIndividual.data.entrega_longitud) && (
+                                            <span className="text-[8px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-black uppercase">GPS ok</span>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button 
+                                            type="button"
+                                            onClick={() => {
+                                                if (navigator.geolocation) {
+                                                    navigator.geolocation.getCurrentPosition((pos) => {
+                                                        formIndividual.setData(prev => ({
+                                                            ...prev,
+                                                            entrega_latitud: pos.coords.latitude,
+                                                            entrega_longitud: pos.coords.longitude
+                                                        }));
+                                                        alert("📍 Ubicación capturada con éxito");
+                                                    }, (err) => alert("No se pudo obtener la ubicación. Activa el GPS."));
+                                                }
+                                            }}
+                                            className={`h-11 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 transition-all ${formIndividual.data.entrega_latitud ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-white text-indigo-600 border border-slate-200'}`}
+                                        >
+                                            <span>📍</span> {formIndividual.data.entrega_latitud ? 'Ubicación OK' : 'Capturar GPS'}
+                                        </button>
+
+                                        <div className="relative">
+                                            <input 
+                                                type="file" 
+                                                accept="image/*" 
+                                                capture="camera"
+                                                onChange={e => formIndividual.setData("foto_evidencia", e.target.files[0])}
+                                                className="hidden" 
+                                                id="foto-camera"
+                                            />
+                                            <label 
+                                                htmlFor="foto-camera"
+                                                className={`h-11 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 transition-all cursor-pointer ${formIndividual.data.foto_evidencia ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-white text-indigo-600 border border-slate-200'}`}
+                                            >
+                                                <span>📸</span> {formIndividual.data.foto_evidencia ? 'Foto OK' : 'Tomar Foto'}
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <p className="text-[8px] text-slate-400 italic text-center">* La ubicación y foto se guardarán como prueba de que estuviste en el centro.</p>
+                                </div>
+                            )}
+
                             <button disabled={formIndividual.processing} className={`w-full h-12 mt-2 rounded-xl font-black text-[10px] uppercase tracking-widest text-white transition-all active:scale-95 ${editando ? "bg-orange-500 shadow-orange-500/30" : "bg-indigo-600 shadow-indigo-500/30"} shadow-lg`}>
                                 {formIndividual.processing ? "Guardando..." : (editando ? "Actualizar Registro" : "Guardar Despacho")}
                             </button>

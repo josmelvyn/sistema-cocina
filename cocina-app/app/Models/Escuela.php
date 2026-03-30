@@ -18,7 +18,10 @@ class Escuela extends Model
         'rnc',
         'direccion',   
         'telefono', 
-        'distrito'     ];
+        'distrito',
+        'latitud',
+        'longitud'
+    ];
 
     // La escuela pertenece a una ruta específica
     public function ruta()

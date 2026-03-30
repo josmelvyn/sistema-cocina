@@ -46,7 +46,10 @@ class DashboardController extends Controller
         
         // --- AÑADE ESTO PARA QUE REACT NO DE ERROR ---
         'platos'   => \App\Models\Plato::all(), 
-        'escuelas' => Escuela::all(),
+        'escuelas' => Escuela::with('ruta')
+            ->withCount(['conduces as entregado_hoy' => function($q) {
+                $q->whereDate('fecha_despacho', Carbon::today());
+            }])->get(),
     ]);
 }
 
@@ -72,7 +75,10 @@ public function mobile()
         
         // Datos locales PWA
         'platos'   => \App\Models\Plato::all(), 
-        'escuelas' => Escuela::all(),
+        'escuelas' => Escuela::with('ruta')
+            ->withCount(['conduces as entregado_hoy' => function($q) {
+                $q->whereDate('fecha_despacho', Carbon::today());
+            }])->get(),
     ]);
 }
 }
