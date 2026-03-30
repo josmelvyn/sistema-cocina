@@ -22,12 +22,24 @@ class PlatoController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-        'nombre' => 'required|string|max:255',
-        'precio_base' => 'required|numeric|min:0', // <-- Nuevo campo
-    ]);
+            'nombre' => 'required|string|max:255',
+            'precio_base' => 'required|numeric|min:0',
+        ]);
 
-    \App\Models\Plato::create($validated);
-    return redirect()->back();
+        Plato::create($validated);
+        return redirect()->back();
+    }
+
+    public function update(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'nombre' => 'required|string|max:255',
+            'precio_base' => 'required|numeric|min:0',
+        ]);
+
+        $plato = Plato::findOrFail($id);
+        $plato->update($validated);
+        return redirect()->back();
     }
 
     // Método para añadir ingredientes a un plato específico

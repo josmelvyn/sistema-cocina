@@ -192,9 +192,11 @@ export default function Dashboard({ auth, stats, insumos_bajos,suscripcion, ulti
                                                     <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-[10px] md:text-xs font-bold tracking-widest uppercase border ${
                                                         c.estado === 'pendiente' 
                                                         ? 'bg-amber-50/80 text-amber-600 border-amber-200/50' 
+                                                        : c.estado === 'anulado' 
+                                                        ? 'bg-rose-50/80 text-rose-600 border-rose-200/50'
                                                         : 'bg-emerald-50/80 text-emerald-600 border-emerald-200/50'
                                                     }`}>
-                                                        <span className={`w-1.5 h-1.5 rounded-full ${c.estado === 'pendiente' ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`}></span>
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${c.estado === 'pendiente' ? 'bg-amber-500 animate-pulse' : c.estado === 'anulado' ? 'bg-rose-500' : 'bg-emerald-500'}`}></span>
                                                         {c.estado}
                                                     </span>
                                                 </td>

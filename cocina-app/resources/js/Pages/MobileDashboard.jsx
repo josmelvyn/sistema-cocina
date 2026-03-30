@@ -145,8 +145,14 @@ export default function MobileDashboard({ auth, stats: serverStats, insumos_bajo
                                 </div>
                                 <div className="text-right flex flex-col items-end gap-1">
                                     <p className="text-sm font-black text-slate-700">{c.cantidad_entregada} <span className="text-[10px] text-slate-400 font-normal">uds</span></p>
-                                    <span className={`flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border ${c.estado === 'pendiente' ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
-                                        <span className={`w-1.5 h-1.5 rounded-full ${c.estado === 'pendiente' ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}`}></span>
+                                    <span className={`flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border ${
+                                        c.estado === 'pendiente' 
+                                        ? 'bg-amber-50 text-amber-600 border-amber-100' 
+                                        : c.estado === 'anulado'
+                                        ? 'bg-rose-50 text-rose-600 border-rose-100'
+                                        : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                    }`}>
+                                        <span className={`w-1.5 h-1.5 rounded-full ${c.estado === 'pendiente' ? 'bg-amber-400 animate-pulse' : c.estado === 'anulado' ? 'bg-rose-500' : 'bg-emerald-400'}`}></span>
                                         {c.estado}
                                     </span>
                                 </div>

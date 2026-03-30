@@ -6,9 +6,29 @@ import { Head, useForm, router, usePage } from '@inertiajs/react';
 export default function Index({ auth, platos, insumos }) {
     const { isMobile } = usePage().props;
     const [mostrarForm, setMostrarForm] = useState(false);
+    const [editMode, setEditMode] = useState(false);
+    const [platoIdEditing, setPlatoIdEditing] = useState(null);
     // 1. Estados para la lógica de cálculo dinámica
     const [calc, setCalc] = useState({}); // Para el formulario de "Añadir"
     const [proyeccion, setProyeccion] = useState({}); // Para ver totales globales en la lista
+
+    const prepararEdicion = (plato) => {
+        setData({
+            nombre: plato.nombre,
+            precio_base: plato.precio_base,
+        });
+        setEditMode(true);
+        setPlatoIdEditing(plato.id);
+        setMostrarForm(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const cancelarEdicion = () => {
+        reset();
+        setEditMode(false);
+        setPlatoIdEditing(null);
+        if (!isMobile) setMostrarForm(false); // On desktop we usually keep it visible but reset
+    };
 
     const handleCalcChange = (platoId, field, value) => {
         setCalc(prev => ({
@@ -29,9 +49,17 @@ export default function Index({ auth, platos, insumos }) {
 
     const submitPlato = (e) => {
         e.preventDefault();
-        post(route('platos.store'), { 
-            onSuccess: () => reset() 
-        });
+        if (editMode) {
+            router.patch(route('platos.update', platoIdEditing), data, {
+                onSuccess: () => {
+                    cancelarEdicion();
+                }
+            });
+        } else {
+            post(route('platos.store'), { 
+                onSuccess: () => reset() 
+            });
+        }
     };
 
     // 3. Función para añadir ingredientes con división automática
@@ -96,9 +124,16 @@ export default function Index({ auth, platos, insumos }) {
                                     <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Precio Referencia x Ración ($)</label>
                                     <input type="number" step="0.01" value={data.precio_base} onChange={e => setData('precio_base', e.target.value)} placeholder="0.00" className="w-full bg-slate-50 border-slate-100 rounded-xl mt-1 h-12 text-center text-lg font-black text-indigo-600 focus:ring-indigo-500" required />
                                 </div>
-                                <button disabled={processing} className="w-full h-12 bg-indigo-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-indigo-900/30 active:scale-95 transition-transform mt-2">
-                                    {processing ? 'Guardando...' : 'Registrar Plato'}
-                                </button>
+                                <div className="flex gap-2 mt-2">
+                                    <button disabled={processing} className="flex-1 h-12 bg-indigo-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-indigo-900/30 active:scale-95 transition-transform">
+                                        {processing ? 'Guardando...' : (editMode ? 'Actualizar' : 'Registrar')}
+                                    </button>
+                                    {editMode && (
+                                        <button type="button" onClick={cancelarEdicion} className="px-4 h-12 bg-slate-100 text-slate-400 rounded-xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-transform">
+                                            X
+                                        </button>
+                                    )}
+                                </div>
                             </form>
                         </div>
                     )}
@@ -111,9 +146,14 @@ export default function Index({ auth, platos, insumos }) {
                                 <div key={plato.id} className="bg-white rounded-[1.5rem] shadow-sm border border-slate-100 overflow-hidden">
                                     {/* CABECERA TARJETA */}
                                     <div className="p-4 bg-indigo-50/50 flex justify-between items-start border-b border-indigo-50">
-                                        <div>
-                                            <p className="font-black text-indigo-900 uppercase text-sm leading-tight">{plato.nombre}</p>
-                                            <p className="text-[10px] font-bold text-emerald-600 mt-1 bg-emerald-100/50 inline-block px-2 py-0.5 rounded-md">P. Base: ${plato.precio_base}</p>
+                                        <div className="flex items-center gap-2">
+                                            <div>
+                                                <p className="font-black text-indigo-900 uppercase text-sm leading-tight">{plato.nombre}</p>
+                                                <p className="text-[10px] font-bold text-emerald-600 mt-1 bg-emerald-100/50 inline-block px-2 py-0.5 rounded-md">P. Base: ${plato.precio_base}</p>
+                                            </div>
+                                            <button onClick={() => prepararEdicion(plato)} className="ml-auto p-2 bg-indigo-100 text-indigo-600 rounded-full active:scale-90 transition-transform">
+                                                ✏️
+                                            </button>
                                         </div>
                                     </div>
 
@@ -255,9 +295,9 @@ export default function Index({ auth, platos, insumos }) {
                 
                 {/* FORMULARIO: REGISTRAR PLATO */}
                 <div className="p-6 bg-white shadow-xl rounded-xl border-t-8 border-indigo-600">
-                    <h3 className="font-black text-gray-700 mb-4 uppercase text-sm italic underline">1. Crear Nuevo Plato / Menú</h3>
-                    <form onSubmit={submitPlato} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                        <div>
+                    <h3 className="font-black text-gray-700 mb-4 uppercase text-sm italic underline">{editMode ? '2. Actualizar Plato / Menú' : '1. Crear Nuevo Plato / Menú'}</h3>
+                    <form onSubmit={submitPlato} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                        <div className="md:col-span-2">
                             <label className="block text-[10px] font-black text-gray-400 uppercase">Nombre del Menú</label>
                             <input type="text" value={data.nombre} onChange={e => setData('nombre', e.target.value)} placeholder="Ej: Arroz con Habichuela" className="w-full border-gray-200 rounded-lg text-sm font-bold shadow-sm" required />
                         </div>
@@ -265,9 +305,16 @@ export default function Index({ auth, platos, insumos }) {
                             <label className="block text-[10px] font-black text-gray-400 uppercase">Precio x Ración ($)</label>
                             <input type="number" step="0.01" value={data.precio_base} onChange={e => setData('precio_base', e.target.value)} placeholder="0.00" className="w-full border-gray-200 rounded-lg text-sm font-bold shadow-sm" required />
                         </div>
-                        <button disabled={processing} className="bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-black text-xs uppercase hover:bg-black transition-all shadow-lg">
-                            {processing ? '...' : 'REGISTRAR PLATO'}
-                        </button>
+                        <div className="flex gap-2">
+                            <button disabled={processing} className={`flex-1 ${editMode ? 'bg-emerald-600' : 'bg-indigo-600'} text-white px-6 py-2.5 rounded-lg font-black text-[10px] uppercase hover:bg-black transition-all shadow-lg`}>
+                                {processing ? '...' : (editMode ? 'ACTUALIZAR' : 'REGISTRAR')}
+                            </button>
+                            {editMode && (
+                                <button type="button" onClick={cancelarEdicion} className="bg-gray-200 text-gray-600 px-4 py-2.5 rounded-lg font-black text-[10px] uppercase hover:bg-gray-300 transition-all shadow-sm">
+                                    CANCELAR
+                                </button>
+                            )}
+                        </div>
                     </form>
                 </div>
 
@@ -278,9 +325,14 @@ export default function Index({ auth, platos, insumos }) {
                             
                             {/* CABECERA DEL PLATO */}
                             <div className="p-4 bg-indigo-50 border-b border-indigo-100 flex justify-between items-center">
-                                <div>
-                                    <span className="font-black text-indigo-900 uppercase text-lg leading-none block">{plato.nombre}</span>
-                                    <span className="text-green-600 font-bold text-xs">Precio: ${plato.precio_base}</span>
+                                <div className="flex items-center gap-3">
+                                    <div>
+                                        <span className="font-black text-indigo-900 uppercase text-lg leading-none block">{plato.nombre}</span>
+                                        <span className="text-green-600 font-bold text-xs">Precio: ${plato.precio_base}</span>
+                                    </div>
+                                    <button onClick={() => prepararEdicion(plato)} className="p-2 hover:bg-indigo-200 rounded-full transition-colors" title="Editar Plato">
+                                        ✏️
+                                    </button>
                                 </div>
                                 <button 
     onClick={() => router.get(route('reporte.despacho'), { 
