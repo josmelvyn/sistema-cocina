@@ -29,11 +29,11 @@ createInertiaApp({
 // 2. REGISTRAMOS EL SERVICE WORKER (Para iPhone y Android)
 if ('serviceWorker' in navigator) {
     registerSW({
+        immediate: true, // Forzar activación inmediata
         onOfflineReady() {
             console.log('✅ Sistema de Cocina listo para trabajar sin internet.');
         },
         onNeedRefresh() {
-            // Esto avisa si subiste una actualización al servidor
             if (confirm('Hay una nueva versión del sistema. ¿Deseas actualizar?')) {
                 window.location.reload();
             }

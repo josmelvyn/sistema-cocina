@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm, router, Link } from '@inertiajs/react';
+import MobileLayout from '@/Layouts/MobileLayout';
+import { Head, useForm, router, Link, usePage } from '@inertiajs/react';
 
 export default function Index({ auth, insumos }) {
+    const { isMobile } = usePage().props;
+    const [mostrarForm, setMostrarForm] = useState(false);
     // 1. Formulario para Nuevo Insumo
     const { data, setData, post, processing, errors, reset } = useForm({
         nombre: '',
@@ -40,6 +43,134 @@ export default function Index({ auth, insumos }) {
             }
         });
     };
+
+    if (isMobile) {
+        return (
+            <MobileLayout title="Almacén Móvil" headerTitle="Inventario" headerSubtitle="Gestión de Insumos">
+                <div className="p-4 space-y-6 pb-20">
+                    {/* ENCABEZADO Y ACCIONES */}
+                    <div className="flex justify-between items-center bg-orange-500 rounded-3xl p-5 shadow-lg shadow-orange-500/30 text-white relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-4 opacity-20 text-5xl">📦</div>
+                        <div className="relative z-10">
+                            <p className="text-3xl font-black leading-none">{insumos.length}</p>
+                            <p className="text-[10px] uppercase font-bold text-orange-100 tracking-widest mt-1">Items Registrados</p>
+                        </div>
+                        <button onClick={() => setMostrarForm(!mostrarForm)} className={`relative z-10 bg-white text-orange-600 px-4 py-3 rounded-xl font-black text-[10px] uppercase shadow-sm active:scale-95 transition-all ${mostrarForm ? 'opacity-80' : ''}`}>
+                            {mostrarForm ? "Cerrar" : "+ Añadir"}
+                        </button>
+                    </div>
+
+                    {/* FORMULARIO DESPLEGABLE */}
+                    {mostrarForm && (
+                        <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 animate-in fade-in slide-in-from-top-4">
+                            <h3 className="text-sm font-black text-slate-800 uppercase mb-4 flex items-center gap-2">
+                                <span>🛒</span> Nuevo Insumo
+                            </h3>
+                            <form onSubmit={submitNuevo} className="space-y-4">
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Nombre</label>
+                                    <input type="text" value={data.nombre} onChange={e => setData('nombre', e.target.value)} className="w-full bg-slate-50 border-slate-100 rounded-xl mt-1 h-12 text-sm font-bold text-slate-700 focus:ring-orange-500" placeholder="Ej: Arroz" required />
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Medida</label>
+                                        <select value={data.unidad_medida} onChange={e => setData('unidad_medida', e.target.value)} className="w-full bg-slate-50 border-slate-100 rounded-xl mt-1 h-12 text-xs font-bold text-slate-600 focus:ring-orange-500">
+                                            <option value="LB">Libras (LB)</option>
+                                            <option value="KG">Kilos (KG)</option>
+                                            <option value="GL">Galones (GL)</option>
+                                            <option value="UD">Unidades (UD)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Stock Inicial</label>
+                                        <input type="number" step="0.01" value={data.stock_actual} onChange={e => setData('stock_actual', e.target.value)} className="w-full bg-slate-50 border-slate-100 rounded-xl mt-1 h-12 text-center text-lg font-black text-orange-600 focus:ring-orange-500" placeholder="0" required />
+                                    </div>
+                                </div>
+                                <button type="submit" disabled={processing} className="w-full h-12 bg-orange-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-orange-600/30 active:scale-95 transition-transform mt-2">
+                                    {processing ? 'Guardando...' : 'Registrar Mercancía'}
+                                </button>
+                            </form>
+                        </div>
+                    )}
+
+                    {/* LISTA DE INSUMOS */}
+                    <div>
+                        <div className="flex justify-between items-center mb-4 px-1">
+                            <h3 className="text-sm font-black text-slate-800 uppercase">Existencias</h3>
+                            <Link href={route('recetas.index')} className="text-[9px] font-black uppercase text-indigo-500 bg-indigo-50 px-3 py-1.5 rounded-lg active:scale-95">
+                                Recetas 🧑‍🍳
+                            </Link>
+                        </div>
+                        <div className="space-y-3">
+                            {insumos.map((insumo) => (
+                                <div key={insumo.id} className={`bg-white rounded-[1.5rem] p-4 shadow-sm border ${insumo.stock_actual < 10 ? 'border-red-200 bg-red-50/10' : 'border-slate-100'}`}>
+                                    <div className="flex justify-between items-center">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`h-12 w-12 rounded-full flex items-center justify-center font-black shadow-inner border ${insumo.stock_actual < 10 ? 'bg-red-50 text-red-500 border-red-100' : 'bg-orange-50 text-orange-500 border-orange-100'}`}>
+                                                {insumo.nombre.charAt(0).toUpperCase()}
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-slate-800 text-sm leading-tight uppercase">{insumo.nombre}</p>
+                                                <p className="text-[10px] uppercase font-bold text-slate-400 mt-1">{insumo.unidad_medida}</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[9px] uppercase font-bold text-slate-400 tracking-widest mb-0.5">Stock</p>
+                                            <span className={`text-xl font-black ${insumo.stock_actual < 10 ? 'text-red-600' : 'text-slate-700'}`}>
+                                                {insumo.stock_actual}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="mt-4 pt-3 border-t border-slate-50 text-right">
+                                        <button 
+                                            onClick={() => setSelectedInsumo(insumo)}
+                                            className="w-full bg-emerald-50 text-emerald-600 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-transform border border-emerald-100 flex items-center justify-center gap-2"
+                                        >
+                                            <span>📥</span> Entrada / Reponer
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                            {insumos.length === 0 && (
+                                <div className="text-center p-8 bg-white rounded-3xl border border-dashed border-slate-200">
+                                    <p className="text-3xl mb-2 opacity-50">💨</p>
+                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Almacén Vacío</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* MODAL REABASTECER PWA */}
+                {selectedInsumo && (
+                    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-end justify-center z-[100] animate-in fade-in">
+                        <div className="bg-white w-full rounded-t-3xl p-6 shadow-2xl animate-in slide-in-from-bottom flex flex-col pb-10">
+                            <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6"></div>
+                            <h3 className="font-black text-xl mb-1 text-slate-800">Cargar Inventario</h3>
+                            <p className="text-xs text-slate-500 mb-6 font-medium">Ingresa cuánto <span className="text-orange-500 font-bold uppercase">{selectedInsumo.nombre} ({selectedInsumo.unidad_medida})</span> estás recibiendo en físico.</p>
+                            <form onSubmit={handleUpdateStock} className="flex flex-col gap-4 max-h-[80vh]">
+                                <div className="relative">
+                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-300 uppercase">{selectedInsumo.unidad_medida}</span>
+                                    <input 
+                                        type="number" step="0.01" autoFocus
+                                        className="w-full bg-slate-50 border-slate-200 rounded-2xl h-16 text-center text-3xl font-black text-slate-700 focus:ring-orange-500 focus:border-orange-500"
+                                        placeholder="0.00"
+                                        value={cantidadExtra}
+                                        onChange={e => setCantidadExtra(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-3 mt-4">
+                                    <button type="button" onClick={() => {setSelectedInsumo(null); setCantidadExtra('');}} className="w-full h-14 bg-slate-100 text-slate-500 rounded-xl font-black text-[10px] uppercase tracking-widest active:scale-95">Cerrar</button>
+                                    <button type="submit" className="w-full h-14 bg-emerald-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-500/30 active:scale-95">Confirmar</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+            </MobileLayout>
+        );
+    }
 
     return (
         <AuthenticatedLayout

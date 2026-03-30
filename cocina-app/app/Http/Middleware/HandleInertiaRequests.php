@@ -42,6 +42,7 @@ class HandleInertiaRequests extends Middleware
                     'permissions' => $request->user()->getAllPermissions()->pluck('name'),
                 ] : null,
             ],
+            'isMobile' => preg_match("/(android|avantgo|blackberry|bolt|boost|cricket|docomo|fone|hiptop|mini|mobi|palm|phone|pie|tablet|up\.browser|up\.link|webos|wos)/i", $request->header('User-Agent')),
             'flash' => [
             'message' => fn () => $request->session()->get('message'),
             'error' => fn () => $request->session()->get('error'),

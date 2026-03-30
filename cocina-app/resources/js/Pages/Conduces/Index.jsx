@@ -1,10 +1,20 @@
 import React, { useState } from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, useForm, Link, router } from "@inertiajs/react";
+import MobileLayout from "@/Layouts/MobileLayout";
+import { Head, useForm, Link, router, usePage } from "@inertiajs/react";
+import { db } from "@/db";
+import { useLiveQuery } from "dexie-react-hooks";
 
 export default function Index({ auth, conduces, escuelas, platos, rutas }) {
+    const { isMobile } = usePage().props;
     const [editando, setEditando] = useState(false);
     const [idEdicion, setIdEdicion] = useState(null);
+
+    // MODO OFFLINE: Leer catálogos desde la DB local si las props del servidor fallan (Offline)
+    const localConduces = useLiveQuery(() => db.conduces.reverse().sortBy("id"), []) || conduces;
+    const localEscuelas = useLiveQuery(() => db.escuelas.toArray(), []) || escuelas;
+    const localPlatos = useLiveQuery(() => db.platos.toArray(), []) || platos;
+    const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
 
     // Obtener mes y año actual para el periodo por defecto
     const fechaActual = new Date();
@@ -33,7 +43,7 @@ export default function Index({ auth, conduces, escuelas, platos, rutas }) {
 
     const handlePlatoChange = (e) => {
         const selectedId = e.target.value;
-        const plato = platos.find((p) => p.id == selectedId);
+        const plato = localPlatos?.find((p) => p.id == selectedId);
         formIndividual.setData((prev) => ({
             ...prev,
             plato_id: selectedId,
@@ -41,8 +51,44 @@ export default function Index({ auth, conduces, escuelas, platos, rutas }) {
         }));
     };
 
-    const submitIndividual = (e) => {
+    const submitIndividual = async (e) => {
         e.preventDefault();
+
+        // LOGICA OFFLINE PWA
+        if (!isOnline && isMobile && !editando) {
+            const fakeId = Date.now();
+            const payload = { ...formIndividual.data };
+
+            // Añadir a cola de Sync
+            await db.sync_queue.add({
+                action: 'POST',
+                route: route("conduces.store"),
+                payload: payload,
+                timestamp: fakeId,
+                status: 'pending'
+            });
+
+            // Registrar temporal en Dexie local para visualización instantánea
+            const escuelaObj = localEscuelas?.find(esc => esc.id == payload.escuela_id);
+            const platoObj = localPlatos?.find(p => p.id == payload.plato_id);
+            
+            await db.conduces.add({
+                id: fakeId,
+                escuela_id: payload.escuela_id,
+                plato_id: payload.plato_id,
+                cantidad_entregada: payload.cantidad_entregada,
+                estado: 'pendiente',
+                numero_conduce: `LOC-${fakeId.toString().slice(-4)}`,
+                escuela: escuelaObj,
+                plato: platoObj,
+                _offline: 1
+            });
+
+            alert("Sin conexión: El despacho se guardó en tu celular y se sincronizará automáticamente cuando vuelva el internet.");
+            formIndividual.reset();
+            return;
+        }
+
         if (editando) {
             formIndividual.patch(route("conduces.update", idEdicion), {
                 onSuccess: () => {
@@ -104,6 +150,146 @@ export default function Index({ auth, conduces, escuelas, platos, rutas }) {
             );
         }
     };
+
+    if (isMobile) {
+        return (
+            <MobileLayout title="Despachos" headerTitle="Despachos" headerSubtitle="Gestión Diaria">
+                <div className="p-4 space-y-6">
+                    {/* ACCIÓN MASIVA */}
+                    {seleccionados.length > 0 && (
+                        <div className="bg-indigo-600 p-4 rounded-3xl mb-4 flex justify-between items-center shadow-2xl animate-in fade-in sticky top-20 z-40">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-white text-indigo-600 w-8 h-8 rounded-full flex items-center justify-center font-black">
+                                    {seleccionados.length}
+                                </div>
+                                <div>
+                                    <p className="text-white font-bold text-xs uppercase tracking-widest leading-tight">Seleccionados</p>
+                                    <p className="text-indigo-200 text-[9px] uppercase">Listos para NCF</p>
+                                </div>
+                            </div>
+                            <button onClick={enviarFacturacionMasiva} className="bg-white text-indigo-600 px-4 py-3 rounded-xl font-black text-[10px] uppercase shadow-sm active:scale-95 transition-transform">
+                                Facturar
+                            </button>
+                        </div>
+                    )}
+
+                    {/* REGISTRO MANUAL */}
+                    <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
+                        <h3 className="text-sm font-black text-slate-800 uppercase mb-4 flex items-center gap-2">
+                            <span>📝</span> {editando ? "Editar Despacho" : "Nuevo Despacho"}
+                        </h3>
+                        <form onSubmit={submitIndividual} className="space-y-4">
+                            <div>
+                                <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Escuela Destino</label>
+                                <select value={formIndividual.data.escuela_id} onChange={e => formIndividual.setData("escuela_id", e.target.value)} className="w-full bg-slate-50 border-slate-100 rounded-xl mt-1 h-12 text-sm text-slate-700 font-medium">
+                                    <option value="">Seleccionar</option>
+                                    {localEscuelas?.map(esc => <option key={esc.id} value={esc.id}>{esc.nombre}</option>)}
+                                </select>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Menú</label>
+                                    <select value={formIndividual.data.plato_id} onChange={handlePlatoChange} className="w-full bg-slate-50 border-slate-100 rounded-xl mt-1 h-12 text-sm text-slate-700 font-medium">
+                                        <option value="">Seleccionar</option>
+                                        {localPlatos?.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Periodo</label>
+                                    <input type="text" value={formIndividual.data.periodo_entrega} onChange={e => formIndividual.setData("periodo_entrega", e.target.value)} className="w-full bg-slate-50 border-slate-100 rounded-xl mt-1 h-12 text-center text-xs uppercase font-bold text-slate-500" />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Cantidad</label>
+                                    <input type="number" value={formIndividual.data.cantidad_entregada} onChange={e => formIndividual.setData("cantidad_entregada", e.target.value)} className="w-full bg-slate-50 border-slate-100 rounded-xl mt-1 h-12 text-center text-xl font-black text-slate-700" placeholder="0" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Precio Unit.</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-slate-400">$</span>
+                                        <input type="number" step="0.01" value={formIndividual.data.precio_racion} onChange={e => formIndividual.setData("precio_racion", e.target.value)} className="w-full bg-slate-50 border-slate-100 rounded-xl mt-1 h-12 text-center text-sm font-bold text-indigo-600 pl-8" placeholder="0.00" />
+                                    </div>
+                                </div>
+                            </div>
+                            <button disabled={formIndividual.processing} className={`w-full h-12 mt-2 rounded-xl font-black text-[10px] uppercase tracking-widest text-white transition-all active:scale-95 ${editando ? "bg-orange-500 shadow-orange-500/30" : "bg-indigo-600 shadow-indigo-500/30"} shadow-lg`}>
+                                {formIndividual.processing ? "Guardando..." : (editando ? "Actualizar Registro" : "Guardar Despacho")}
+                            </button>
+                            {editando && (
+                                <button type="button" onClick={() => { setEditando(false); formIndividual.reset(); }} className="w-full h-10 rounded-xl font-bold text-[10px] uppercase tracking-widest text-slate-500 bg-slate-100 mt-2">
+                                    Cancelar Edición
+                                </button>
+                            )}
+                        </form>
+                    </div>
+
+                    {/* HISTORIAL */}
+                    <div>
+                        <h3 className="text-sm font-black text-slate-800 uppercase mb-3 ml-1">Últimos Despachos</h3>
+                        <div className="space-y-3">
+                            {localConduces.length > 0 ? localConduces.map(c => (
+                                <div key={c.id} className={`bg-white rounded-[1.5rem] p-4 shadow-sm border ${c.estado === 'anulado' ? 'opacity-60 border-red-100' : c._offline ? 'border-orange-200 border-dashed bg-orange-50/10' : 'border-slate-100'}`}>
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-white shadow-inner ${c.estado === 'anulado' ? 'bg-red-400' : c._offline ? 'bg-orange-300' : c.estado === 'facturado' ? 'bg-blue-400' : 'bg-emerald-400'}`}>
+                                                {c.estado === 'anulado' ? '🚫' : c._offline ? '⏳' : c.estado === 'facturado' ? '✅' : '📦'}
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-slate-800 leading-tight text-sm">{c.escuela?.nombre}</p>
+                                                <p className="text-[10px] text-indigo-500 font-bold uppercase mt-0.5">{c.plato?.nombre}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="bg-slate-50 rounded-xl p-3 flex justify-between items-center mb-3">
+                                        <div>
+                                            <p className="text-[9px] text-slate-400 uppercase font-bold tracking-widest mb-0.5">Volumen</p>
+                                            <p className="text-lg font-black text-slate-700 leading-none">{c.cantidad_entregada} <span className="text-[10px] font-medium text-slate-500">uds</span></p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[9px] text-slate-400 uppercase font-bold tracking-widest mb-0.5">Estado</p>
+                                            <span className={`inline-block text-[9px] px-2.5 py-1 rounded-md font-black uppercase tracking-wider border ${c._offline ? 'bg-orange-100 text-orange-700 border-orange-200' : c.estado === 'pendiente' ? 'bg-amber-100 text-amber-700 border-amber-200' : c.estado === 'anulado' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-emerald-100 text-emerald-700 border-emerald-200'}`}>
+                                                {c._offline ? 'Pendiente Red' : c.estado}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2 pl-1">
+                                            {c.estado === 'pendiente' && (
+                                                <input
+                                                    type="checkbox"
+                                                    className="rounded-lg border-slate-300 w-5 h-5 text-indigo-600 focus:ring-indigo-500"
+                                                    checked={seleccionados.includes(c.id)}
+                                                    onChange={() => toggleSeleccion(c.id)}
+                                                />
+                                            )}
+                                            <span className="text-[10px] text-slate-400 font-mono tracking-wider">REF: {c.numero_conduce}</span>
+                                        </div>
+                                        
+                                        <div className="flex gap-1.5">
+                                            <a href={route("conduces.imprimir", c.id)} target="_blank" className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-95 transition-transform text-xs border border-slate-200 shadow-sm">🖨️</a>
+                                            {c.estado === 'pendiente' && (
+                                                <>
+                                                    <button onClick={() => { setEditando(true); setIdEdicion(c.id); formIndividual.setData(c); window.scrollTo({top:0, behavior:'smooth'}); }} className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 active:scale-95 transition-transform text-xs border border-orange-100 shadow-sm">📝</button>
+                                                    <button onClick={() => handleAnular(c.id)} className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-red-500 active:scale-95 transition-transform text-xs border border-red-100 shadow-sm">🚫</button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )) : (
+                                <div className="text-center p-8 bg-white rounded-3xl border border-dashed border-slate-200">
+                                    <p className="text-3xl mb-2 opacity-50">📂</p>
+                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">No hay historial</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </MobileLayout>
+        );
+    }
 
     return (
         <AuthenticatedLayout

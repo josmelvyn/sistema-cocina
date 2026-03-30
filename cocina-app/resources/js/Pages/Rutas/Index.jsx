@@ -1,8 +1,10 @@
 import React from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm } from '@inertiajs/react';
+import MobileLayout from '@/Layouts/MobileLayout';
+import { Head, useForm, usePage } from '@inertiajs/react';
 
 export default function Index({ auth, rutas }) {
+    const { isMobile } = usePage().props;
     // Formulario para crear nuevas rutas
     const { data, setData, post, processing, errors, reset } = useForm({
         nombre: '',
@@ -18,6 +20,98 @@ export default function Index({ auth, rutas }) {
             },
         });
     };
+
+    if (isMobile) {
+        return (
+            <MobileLayout title="Rutas de Despacho" headerTitle="Rutas" headerSubtitle="Gestión Logística">
+                <div className="p-4 space-y-6">
+                    {/* NUEVA RUTA */}
+                    <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
+                        <h3 className="text-sm font-black text-slate-800 uppercase mb-4 flex items-center gap-2">
+                            <span>📍</span> Nueva Ruta
+                        </h3>
+                        <form onSubmit={submit} className="space-y-4">
+                            <div>
+                                <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Nombre Ruta</label>
+                                <input 
+                                    type="text" 
+                                    value={data.nombre}
+                                    onChange={e => setData('nombre', e.target.value)}
+                                    placeholder="Ej: Ruta Norte"
+                                    className="w-full bg-slate-50 border-slate-100 rounded-xl mt-1 h-12 text-sm text-slate-700 font-bold focus:ring-green-500"
+                                    required
+                                />
+                                {errors.nombre && <div className="text-red-500 text-xs mt-1 px-2">{errors.nombre}</div>}
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Chofer Asignado</label>
+                                <input 
+                                    type="text" 
+                                    value={data.chofer}
+                                    onChange={e => setData('chofer', e.target.value)}
+                                    placeholder="Nombre del conductor"
+                                    className="w-full bg-slate-50 border-slate-100 rounded-xl mt-1 h-12 text-sm text-slate-700 font-medium focus:ring-green-500"
+                                />
+                                {errors.chofer && <div className="text-red-500 text-xs mt-1 px-2">{errors.chofer}</div>}
+                            </div>
+                            <button 
+                                disabled={processing}
+                                className="w-full h-12 mt-2 rounded-xl font-black text-[10px] uppercase tracking-widest text-white bg-green-600 shadow-lg shadow-green-600/30 active:scale-95 transition-transform"
+                            >
+                                {processing ? "Guardando..." : "Crear Ruta"}
+                            </button>
+                        </form>
+                    </div>
+
+                    {/* LISTA DE RUTAS */}
+                    <div>
+                        <h3 className="text-sm font-black text-slate-800 uppercase mb-3 ml-1">Logística Activa</h3>
+                        <div className="grid grid-cols-1 gap-3">
+                            {rutas.map((ruta) => (
+                                <div key={ruta.id} className="bg-white rounded-[1.5rem] p-4 flex flex-col justify-between shadow-sm border border-slate-100">
+                                    <div className="flex items-start justify-between mb-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-10 w-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center font-bold text-lg shadow-inner border border-blue-100">
+                                                🚚
+                                            </div>
+                                            <div>
+                                                <p className="font-black text-slate-800 uppercase tracking-tight text-sm leading-tight">{ruta.nombre}</p>
+                                                <p className="text-[10px] font-bold text-slate-400 mt-0.5">REF: {ruta.id}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-slate-50 rounded-xl p-3 flex justify-between items-center mb-4 border border-slate-100">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-lg">👤</span>
+                                            <div>
+                                                <p className="text-[9px] text-slate-400 uppercase font-black tracking-widest mb-0.5">Conductor</p>
+                                                <p className="text-xs font-bold text-slate-700 capitalize w-24 truncate">{ruta.chofer || <span className="text-red-400 italic">Sin Asignar</span>}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <a 
+                                        href={route('rutas.reporte', ruta.id)} 
+                                        target="_blank"
+                                        className="w-full flex items-center justify-center gap-2 bg-blue-50 text-blue-600 font-black uppercase text-[10px] py-3 rounded-xl tracking-widest active:scale-95 transition-transform border border-blue-100"
+                                    >
+                                        <span>🖨️</span> Hoja de Ruta
+                                    </a>
+                                </div>
+                            ))}
+                            {rutas.length === 0 && (
+                                <div className="text-center p-8 bg-white rounded-3xl border border-dashed border-slate-200">
+                                    <p className="text-3xl mb-2 opacity-50">🌍</p>
+                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Sin Rutas</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </MobileLayout>
+        );
+    }
 
     return (
         <AuthenticatedLayout

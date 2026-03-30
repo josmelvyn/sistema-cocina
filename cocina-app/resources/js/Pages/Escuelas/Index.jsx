@@ -1,8 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, useForm } from "@inertiajs/react";
+import MobileLayout from "@/Layouts/MobileLayout";
+import { Head, useForm, usePage } from "@inertiajs/react";
 
 export default function Index({ auth, escuelas, rutas }) {
+    const { isMobile } = usePage().props;
+    const [mostrarForm, setMostrarForm] = useState(false);
     // 1. Configuración del formulario con los campos nuevos
     const { data, setData, post, processing, errors, reset } = useForm({
         nombre: "",
@@ -26,6 +29,122 @@ export default function Index({ auth, escuelas, rutas }) {
             },
         });
     };
+
+    if (isMobile) {
+        return (
+            <MobileLayout title="Directorio de Escuelas" headerTitle="Escuelas" headerSubtitle="Centros Educativos">
+                <div className="p-4 space-y-6">
+                    {/* ACCIONES SUPERIORES */}
+                    <div className="flex justify-between items-center bg-indigo-600 rounded-3xl p-5 shadow-lg shadow-indigo-500/30 text-white">
+                        <div className="flex items-center gap-3">
+                            <div className="text-3xl">🎒</div>
+                            <div>
+                                <p className="text-2xl font-black leading-none">{escuelas.length}</p>
+                                <p className="text-[10px] uppercase font-bold text-indigo-200 tracking-widest mt-0.5">Cobertura Total</p>
+                            </div>
+                        </div>
+                        <button onClick={() => setMostrarForm(!mostrarForm)} className={`bg-white text-indigo-600 px-4 py-3 rounded-xl font-black text-[10px] uppercase shadow-sm active:scale-95 transition-all ${mostrarForm ? 'opacity-80' : ''}`}>
+                            {mostrarForm ? "Cerrar" : "+ Registrar"}
+                        </button>
+                    </div>
+
+                    {/* FORMULARIO DESPLEGABLE */}
+                    {mostrarForm && (
+                        <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 animate-in fade-in slide-in-from-top-4">
+                            <h3 className="text-sm font-black text-slate-800 uppercase mb-4 flex items-center gap-2">
+                                <span>🏫</span> Nuevo Registro
+                            </h3>
+                            <form onSubmit={submit} className="space-y-4">
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Nombre de Escuela</label>
+                                    <input type="text" value={data.nombre} onChange={e => setData("nombre", e.target.value)} className="w-full bg-slate-50 border-slate-100 rounded-xl mt-1 h-12 text-sm font-bold text-slate-700" required />
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Código</label>
+                                        <input type="text" value={data.codigo_minerd} onChange={e => setData("codigo_minerd", e.target.value)} className="w-full bg-slate-50 border-slate-100 rounded-xl mt-1 h-12 text-sm text-center font-mono font-bold" required />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">RNC</label>
+                                        <input type="text" value={data.rnc} onChange={e => setData("rnc", e.target.value)} className="w-full bg-slate-50 border-slate-100 rounded-xl mt-1 h-12 text-sm text-center font-mono font-bold" />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Ruta</label>
+                                        <select value={data.ruta_id} onChange={e => setData("ruta_id", e.target.value)} className="w-full bg-slate-50 border-slate-100 rounded-xl mt-1 h-12 text-xs font-bold text-slate-600" required>
+                                            <option value="">Selección</option>
+                                            {rutas.map(r => <option key={r.id} value={r.id}>{r.nombre}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Raciones</label>
+                                        <input type="number" value={data.raciones_estandar} onChange={e => setData("raciones_estandar", e.target.value)} className="w-full bg-slate-50 border-slate-100 rounded-xl mt-1 h-12 text-center text-lg font-black text-indigo-600" required />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Director(a)</label>
+                                    <input type="text" value={data.director} onChange={e => setData("director", e.target.value)} className="w-full bg-slate-50 border-slate-100 rounded-xl mt-1 h-12 text-sm font-medium" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Teléfono</label>
+                                        <input type="text" value={data.telefono} onChange={e => setData("telefono", e.target.value)} className="w-full bg-slate-50 border-slate-100 rounded-xl mt-1 h-12 text-sm text-center font-mono" />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Distrito</label>
+                                        <input type="text" value={data.distrito} onChange={e => setData("distrito", e.target.value)} className="w-full bg-slate-50 border-slate-100 rounded-xl mt-1 h-12 text-sm text-center" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Dirección</label>
+                                    <input type="text" value={data.direccion} onChange={e => setData("direccion", e.target.value)} className="w-full bg-slate-50 border-slate-100 rounded-xl mt-1 h-12 text-sm" />
+                                </div>
+                                <button disabled={processing} className="w-full h-12 bg-indigo-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-indigo-600/30 active:scale-95 transition-transform mt-2">
+                                    {processing ? "Guardando..." : "Guardar Escuela"}
+                                </button>
+                            </form>
+                        </div>
+                    )}
+
+                    {/* LISTA DE ESCUELAS */}
+                    <div>
+                        <h3 className="text-sm font-black text-slate-800 uppercase mb-3 ml-1">Directorio</h3>
+                        <div className="space-y-3">
+                            {escuelas.length > 0 ? escuelas.map((escuela) => (
+                                <div key={escuela.id} className="bg-white rounded-[1.5rem] p-4 shadow-sm border border-slate-100">
+                                    <div className="flex gap-4">
+                                        <div className="h-12 w-12 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center font-black text-slate-400 shadow-inner">
+                                            🏫
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="font-bold text-slate-800 leading-tight text-sm">{escuela.nombre}</p>
+                                            <p className="text-[9px] font-black text-indigo-500 uppercase mt-1 tracking-widest">RUT: {escuela.ruta?.nombre || "Sin Asignar"}</p>
+                                        </div>
+                                    </div>
+                                    <div className="mt-4 bg-slate-50 p-3 rounded-xl border border-slate-100 flex justify-between items-center">
+                                        <div>
+                                            <p className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Director</p>
+                                            <p className="text-xs font-bold text-slate-700">{escuela.director || <span className="text-red-400 italic">No Reg.</span>}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[9px] uppercase font-bold text-slate-400 tracking-wider mb-0.5">Raciones</p>
+                                            <span className="bg-white px-2 py-1 rounded-md text-sm font-black text-indigo-600 border border-indigo-50">{escuela.raciones_estandar || 0}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )) : (
+                                <div className="text-center p-8 bg-white rounded-3xl border border-dashed border-slate-200">
+                                    <p className="text-3xl mb-2 opacity-50">🏫</p>
+                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Sin Centros</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </MobileLayout>
+        );
+    }
 
     return (
         <AuthenticatedLayout

@@ -1,5 +1,17 @@
 <?php
 
+Route::get('/manifest.webmanifest', function () {
+    return response()->file(public_path('build/manifest.webmanifest'), [
+        'Content-Type' => 'application/manifest+json',
+    ]);
+});
+
+Route::get('/sw.js', function () {
+    return response()->file(public_path('build/sw.js'), [
+        'Content-Type' => 'application/javascript',
+    ]);
+});
+
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RutaController;
 use App\Http\Controllers\EscuelaController;
@@ -60,6 +72,7 @@ Route::middleware(['auth', CheckSubscription::class])->group(function () {
     
     // 1. Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/mobile-dashboard', [DashboardController::class, 'mobile'])->name('dashboard.mobile');
 
     // 2. Perfil
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
