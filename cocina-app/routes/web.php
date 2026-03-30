@@ -100,7 +100,7 @@ Route::middleware(['auth', CheckSubscription::class])->group(function () {
     // 7. Reportes
     Route::get('/rutas/{id}/reporte', [RutaController::class, 'reporte'])->name('rutas.reporte');
     Route::get('/contabilidad/reporte-escuelas', [ContabilidadController::class, 'reporteEscuelas'])->name('contabilidad.reporte_escuelas');
-   Route::get('/facturas/reimprimir/{id}', [ConduceController::class, 'reimprimirFactura'])->name('facturas.reimprimir');
+    Route::get('/facturas/reimprimir/{id}', [ConduceController::class, 'reimprimirFactura'])->name('facturas.reimprimir');
     Route::get('/conduces/relacion-centro/{escuelaId}', [ConduceController::class, 'relacionPorCentro'])
     ->name('conduces.relacionCentro');
     Route::get('/reportes', [ConduceController::class, 'indexReportes'])->name('reportes.index');
@@ -112,7 +112,8 @@ Route::middleware(['auth', CheckSubscription::class])->group(function () {
     //facturacion global
     Route::get('/reportes/factura-global-imprimir', [ConduceController::class, 'facturaGlobalImprimir'])
     ->name('reportes.facturaGlobalImprimir');
-    
+    Route::get('/reportes/relacion-general', [ConduceController::class, 'relacionGeneral'])->name('reportes.relacionGeneral');
+
     });
 
 require __DIR__.'/auth.php';

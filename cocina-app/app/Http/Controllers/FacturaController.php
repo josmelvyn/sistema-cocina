@@ -147,10 +147,11 @@ public function anular($id, Request $request)
             $hasta = \Carbon\Carbon::createFromFormat('d/m/Y', trim($partes[1]))->format('Y-m-d');
 
             // Actualizamos todos los conduces de ese rango
-            \App\Models\Conduce::whereBetween('fecha_despacho', [$desde, $hasta])
-                ->where('estado', 'pagado')
-                ->update(['estado' => 'pendiente']);
-        }
+      \App\Models\Conduce::where('factura_id', $factura->id)
+        ->update([
+            'estado' => 'pendiente', // o 'facturado'
+            'factura_id' => null     // Los soltamos
+        ]);}
 
         // 3. Actualizar Factura
         $factura->update([

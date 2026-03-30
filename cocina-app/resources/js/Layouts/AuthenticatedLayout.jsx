@@ -50,18 +50,22 @@ export default function AuthenticatedLayout({ header, children }) {
                                 <NavLink href={route('escuelas.index')} active={route().current('escuelas.*')}>Escuelas</NavLink>
                                 <NavLink href={route('insumos.index')} active={route().current('insumos.*')}>Insumos</NavLink>
                                 <NavLink href={route('recetas.index')} active={route().current('recetas.*')}>Recetas</NavLink>
-                                <NavLink href={route('conduces.index')} active={route().current('conduces.*')}>Conduces</NavLink>
-                                <NavLink href={route('facturas.index')} active={route().current('facturas.*')}>Facturacion</NavLink>
-                                 <NavLink href={route('reportes.index')} active={route().current('reportes.*')}>Reportes</NavLink>
                                 <NavLink href={route('platos.index')} active={route().current('platos.*')}>Platos</NavLink>
-                                <NavLink href={route('contabilidad.index')} active={route().current('contabilidad.*')}>Contabilidad</NavLink>
+                                
                                 
                                 {/* ENLACE DE USUARIOS ($12 USD) - Solo para Admin */}
                                 {user.rol === 'admin' && (
-                                    <NavLink href={route('usuarios.index')} active={route().current('usuarios.*')}>
-                                        Personal
-                                    </NavLink>
+                                    <>
+                                        <NavLink href={route('usuarios.index')} active={route().current('usuarios.*')}>
+                                            Personal
+                                        </NavLink>
+                                        <NavLink href={route('facturas.index')} active={route().current('facturas.*')}>Facturacion</NavLink>
+                                        <NavLink href={route('reportes.index')} active={route().current('reportes.*')}>Reportes/Facturacion</NavLink>
+                                        <NavLink href={route('contabilidad.index')} active={route().current('contabilidad.*')}>Contabilidad</NavLink>
+                                        <NavLink href={route('conduces.index')} active={route().current('conduces.*')}>Conduces</NavLink>
+                                    </>
                                 )}
+                               
                             </div>
                         </div>
 

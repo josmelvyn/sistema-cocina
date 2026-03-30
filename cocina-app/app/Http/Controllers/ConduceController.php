@@ -320,8 +320,10 @@ public function facturaPeriodo(Request $request, $escuelaId)
 
 public function facturaGlobalImprimir(Request $request)
 {
+    
     $request->validate(['desde' => 'required|date', 'hasta' => 'required|date']);
 
+    
     // 1. Preparamos la consulta base (Query)
     $query = \App\Models\Conduce::whereBetween('fecha_despacho', [$request->desde, $request->hasta])
         ->whereNotIn('estado', ['pagado', 'anulado']);
@@ -348,7 +350,7 @@ public function facturaGlobalImprimir(Request $request)
     }
 
         // 4. Marcamos como PAGADOS en la base de datos
-    $query->update(['estado' => 'pagado']);
+  
 
     // 6. Realizamos los cálculos usando la variable $conduces (que ya está definida)
     $totalRaciones = $conduces->sum('cantidad_entregada');
@@ -357,10 +359,14 @@ public function facturaGlobalImprimir(Request $request)
     $totalGeneral = $subtotal + $itbis;
 
     $ncfGenerado = $secuencia->prefijo . str_pad($secuencia->proximo_numero, 8, '0', STR_PAD_LEFT);
+    
+
+
+    $ncfGenerado = $secuencia->prefijo . str_pad($secuencia->proximo_numero, 8, '0', STR_PAD_LEFT);
     \DB::table('ncf_sequences')->where('id', $secuencia->id)->increment('proximo_numero');
 
     // 7. Guardar en tabla facturas
-    \DB::table('facturas')->insert([
+    $facturaId = \DB::table('facturas')->insertGetId([
         'ncf' => $ncfGenerado,
         'periodo' => \Carbon\Carbon::parse($request->desde)->format('d/m/Y') . " A " . \Carbon\Carbon::parse($request->hasta)->format('d/m/Y'),
         'monto_total' => $totalGeneral,
@@ -370,6 +376,10 @@ public function facturaGlobalImprimir(Request $request)
         'estado' => 'emitida',
         'created_at' => now(),
     ]);
+      $query->update([
+            'estado' => 'pagado',
+            'factura_id'=> $facturaId
+        ]);
 
     return \Inertia\Inertia::render('Reportes/FacturaGlobalImprimir', [
         'datos_inabie' => [
@@ -431,6 +441,24 @@ public function reimprimirFactura($id)
         ]
     ]);
 }
+public function relacionGeneral(Request $request)
+{
+    $request->validate(['desde' => 'required|date', 'hasta' => 'required|date']);
 
+    $conduces = Conduce::whereBetween('fecha_despacho', [$request->desde, $request->hasta])
+        ->with('escuela') // Para el código y nombre del centro
+        ->where('estado', '!=', 'anulado')
+        ->orderBy('fecha_despacho', 'asc')
+        ->orderBy('numero_conduce', 'asc')
+        ->get();
+
+    return Inertia::render('Reportes/RelacionGeneral', [
+        'conduces' => $conduces,
+        'filtros' => [
+            'desde' => \Carbon\Carbon::parse($request->desde)->format('d/m/Y'),
+            'hasta' => \Carbon\Carbon::parse($request->hasta)->format('d/m/Y')
+        ]
+    ]);
+}
 
 }
