@@ -55,7 +55,7 @@ export default function Dashboard({ auth, stats, insumos_bajos,suscripcion, ulti
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                         
                         {/* CONTROL DE PERSONAL ($12 USD) - Solo visible para Admin */}
-                        {auth.user.rol === 'admin' && (
+                        {auth.user.roles?.includes('admin') && (
                             <div className="lg:col-span-1 bg-gradient-to-br from-slate-900 to-slate-800 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-7 relative overflow-hidden border border-slate-700/50 hover:shadow-indigo-500/20 transition-all duration-500 group">
                                 <div className="absolute inset-0 bg-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                                 
@@ -91,7 +91,7 @@ export default function Dashboard({ auth, stats, insumos_bajos,suscripcion, ulti
                         )}
                         
                         {/* Tarjetas de Alto Impacto */}
-                        <div className={`grid grid-cols-1 sm:grid-cols-2 gap-6 ${auth.user.rol === 'admin' ? 'lg:col-span-4 lg:grid-cols-4' : 'lg:col-span-5 lg:grid-cols-4'}`}>
+                        <div className={`grid grid-cols-1 sm:grid-cols-2 gap-6 ${auth.user.roles?.includes('admin') ? 'lg:col-span-4 lg:grid-cols-4' : 'lg:col-span-5 lg:grid-cols-4'}`}>
                             <Card title="Escuelas Activas" value={stats.total_escuelas} color="indigo" icon="🏢" description="Centros en servicio" />
                             <Card title="Raciones / Hoy" value={stats.raciones_hoy} color="orange" icon="⚡" description="Meta diaria: 2,500" progress={ (stats.raciones_hoy / 2500) * 100 } />
                             <Card title="Cuentas x Cobrar" value={`$${Number(stats.por_cobrar).toLocaleString()}`} color="rose" icon="💳" description="Pendiente de pago" />

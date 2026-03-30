@@ -48,15 +48,18 @@ class UserController extends Controller
         ]);
 
         // 3. Crear el "Hijo" (Empleado) vinculado al "Padre" (Admin)
-        User::create([
+        $nuevoEmpleado = User::create([
             'name'               => $request->name,
             'email'              => $request->email,
             'password'           => Hash::make($request->password),
             'empresa_id'         => $empresaId,
-            'rol'                => 'staff',
+            'rol'                => 'staff', // Lo mantenemos por trazabilidad/código antiguo
             'suscripcion_activa' => $admin->suscripcion_activa,
             'vence_el'           => $admin->vence_el
         ]);
+        
+        // Asignar rol de spatie
+        $nuevoEmpleado->assignRole('staff');
 
         return redirect()->back()->with('message', 'Personal añadido correctamente.');
     }
