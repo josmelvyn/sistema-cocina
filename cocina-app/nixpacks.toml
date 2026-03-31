@@ -1,0 +1,13 @@
+[phases.setup]
+nixPkgs = ["php", "nodejs_20", "composer"]
+
+[phases.install]
+cmds = [
+  "composer install --ignore-platform-reqs",
+  "npm install"
+]
+
+[phases.build]
+cmds = [
+  "npm run build"
+]
