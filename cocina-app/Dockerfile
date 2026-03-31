@@ -21,4 +21,5 @@ RUN npm run build
 RUN chown -R www-data:www-data /app
 RUN a2enmod rewrite
 
+# Start command de Railway se encarga de migraciones
 CMD ["vendor/bin/heroku-php-apache2", "public/"]
