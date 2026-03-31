@@ -21,5 +21,10 @@ RUN npm run build
 RUN chown -R www-data:www-data /app
 RUN a2enmod rewrite
 
-# Start command, migraciones solo al iniciar container
-CMD ["sh", "-c", "php artisan config:clear && php artisan cache:clear && php artisan migrate --force && vendor/bin/heroku-php-apache2 public/"]
+# Script de espera para BD
+RUN apt-get install -y netcat-traditional
+COPY wait-for-db.sh /usr/local/bin/wait-for-db.sh
+RUN chmod +x /usr/local/bin/wait-for-db.sh
+
+# Start command con espera
+CMD ["sh", "-c", "wait-for-db.sh && php artisan config:clear && php artisan cache:clear && php artisan migrate --force && vendor/bin/heroku-php-apache2 public/"]
