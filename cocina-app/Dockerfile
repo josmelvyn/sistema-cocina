@@ -24,6 +24,7 @@ COPY . /app
 RUN composer install --ignore-platform-reqs --no-interaction --optimize-autoloader
 
 # 6️⃣ Instalar dependencias de Node (usar npm install para evitar problemas con lock)
+RUN composer install --ignore-platform-reqs
 RUN npm install
 RUN npm run build
 
