@@ -1,29 +1,36 @@
-# Usamos PHP + Apache
+# Dockerfile para Laravel + Node + Railway
+
+# 1️⃣ Base PHP + Apache
 FROM php:8.3-apache
 
-# Instalaciones necesarias (Composer, Node.js, extensiones PHP)
+# 2️⃣ Instalar dependencias del sistema
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
     libzip-dev \
+    libonig-dev \
+    curl \
     npm \
-    && docker-php-ext-install pdo_mysql zip
+    && docker-php-ext-install pdo_mysql zip mbstring
 
-# Instalar Composer global
+# 3️⃣ Instalar Composer global
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copiar proyecto al contenedor
+# 4️⃣ Configurar directorio de trabajo
 WORKDIR /app
 COPY . /app
 
-# Instalar dependencias
-RUN composer install --ignore-platform-reqs
-RUN npm ci
+# 5️⃣ Instalar dependencias de PHP
+RUN composer install --ignore-platform-reqs --no-interaction --optimize-autoloader
+
+# 6️⃣ Instalar dependencias de Node (usar npm install para evitar problemas con lock)
+RUN npm install
 RUN npm run build
 
-# Configurar Apache para Laravel
+# 7️⃣ Configurar permisos y Apache
 RUN chown -R www-data:www-data /app
 RUN a2enmod rewrite
 
-# No ejecutar php artisan migrate aquí, se hará en Start Command
+# 8️⃣ No ejecutar migraciones aquí; se harán en Start Command de Railway
+# 9️⃣ Comando por defecto para iniciar Apache
 CMD ["vendor/bin/heroku-php-apache2", "public/"]
