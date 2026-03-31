@@ -21,6 +21,8 @@ RUN npm run build
 RUN chown -R www-data:www-data /app
 RUN a2enmod rewrite
 
+EXPOSE 80
+
 # Script de espera para BD
 RUN apt-get install -y netcat-traditional
 COPY wait-for-db.sh /usr/local/bin/wait-for-db.sh
