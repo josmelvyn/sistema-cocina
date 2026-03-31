@@ -36,12 +36,19 @@ export default function Index({ auth, conduces, escuelas, platos, rutas }) {
         foto_evidencia: null,
     });
 
-    // 2. Formulario de Autoconduce (Masivo por Ruta)
+    // 3. Formulario de Entrega (Para chofer)
+    const formEntrega = useForm({
+        entrega_latitud: null,
+        entrega_longitud: null,
+        foto_evidencia: null,
+    });
+
+    // 4. Formulario Masivo (Generación automática)
     const formMasivo = useForm({
         ruta_id: "",
         plato_id: "",
+        periodo_entrega: periodoDefault,
         fecha: fechaActual.toISOString().split("T")[0],
-        periodo_entrega: periodoDefault, // <--- NUEVO CAMPO FIX
     });
 
     const handlePlatoChange = (e) => {
@@ -154,6 +161,46 @@ export default function Index({ auth, conduces, escuelas, platos, rutas }) {
         }
     };
 
+    const handleConfirmarEntrega = (c) => {
+        const lat = formEntrega.data.entrega_latitud;
+        const lon = formEntrega.data.entrega_longitud;
+        const foto = formEntrega.data.foto_evidencia;
+
+        if (!lat || !lon) {
+            alert("⚠️ Primero captura el GPS para este conduce.");
+            return;
+        }
+
+        if (!foto && !confirm("No has subido foto. ¿Deseas continuar sin evidencia visual?")) {
+            return;
+        }
+
+        router.patch(
+            route("conduces.entregar", c.id),
+            { entrega_latitud: lat, entrega_longitud: lon, foto_evidencia: foto },
+            {
+                preserveScroll: true,
+                forceFormData: true,
+                onSuccess: () => {
+                    alert("✅ Entrega registrada correctamente.");
+                    formEntrega.reset();
+                },
+                onError: (errors) => {
+                    console.error("Error al entregar:", errors);
+                    const errorDetails = errors
+                        ? Object.values(errors)
+                              .flat()
+                              .join(" ")
+                        : null;
+                    alert(
+                        "❌ Error al confirmar entrega. " +
+                            (errorDetails || "Revisa la conexión y los datos."),
+                    );
+                },
+            },
+        );
+    };
+
     if (isMobile) {
         return (
             <MobileLayout title="Despachos" headerTitle="Despachos" headerSubtitle="Gestión Diaria">
@@ -222,7 +269,7 @@ export default function Index({ auth, conduces, escuelas, platos, rutas }) {
                                 <div className="space-y-4 p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                                     <div className="flex justify-between items-center">
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Prueba de Entrega</p>
-                                        {(formIndividual.data.entrega_latitud && formIndividual.data.entrega_longitud) && (
+                                        {(formEntrega.data.entrega_latitud && formEntrega.data.entrega_longitud) && (
                                             <span className="text-[8px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-black uppercase">GPS ok</span>
                                         )}
                                     </div>
@@ -232,19 +279,46 @@ export default function Index({ auth, conduces, escuelas, platos, rutas }) {
                                             type="button"
                                             onClick={() => {
                                                 if (navigator.geolocation) {
-                                                    navigator.geolocation.getCurrentPosition((pos) => {
-                                                        formIndividual.setData(prev => ({
-                                                            ...prev,
-                                                            entrega_latitud: pos.coords.latitude,
-                                                            entrega_longitud: pos.coords.longitude
-                                                        }));
-                                                        alert("📍 Ubicación capturada con éxito");
-                                                    }, (err) => alert("No se pudo obtener la ubicación. Activa el GPS."));
+                                                    const isHTTPS = window.location.protocol === 'https:';
+                                                    if (!isHTTPS && /iPhone|iPad|Safari/.test(navigator.userAgent)) {
+                                                        alert("⚠️ Safari requiere HTTPS. Usa https:// para activar el GPS.");
+                                                        return;
+                                                    }
+                                                    navigator.geolocation.getCurrentPosition(
+                                                        (pos) => {
+                                                            formEntrega.setData(prev => ({
+                                                                ...prev,
+                                                                entrega_latitud: pos.coords.latitude,
+                                                                entrega_longitud: pos.coords.longitude
+                                                            }));
+                                                            alert("📍 Ubicación capturada con éxito");
+                                                        },
+                                                        (err) => {
+                                                            let message = "❌ Error al obtener ubicación: ";
+                                                            if (err.code === 1) {
+                                                                message += "Permiso denegado. Ve a Configuración > Safari > Ubicación y permite el acceso.";
+                                                            } else if (err.code === 2) {
+                                                                message += "GPS no disponible. Verifica que esté activado.";
+                                                            } else if (err.code === 3) {
+                                                                message += "Tiempo agotado. Intenta en un lugar abierto.";
+                                                            } else {
+                                                                message += err.message || "Error desconocido";
+                                                            }
+                                                            alert(message);
+                                                        },
+                                                        {
+                                                            enableHighAccuracy: true,
+                                                            timeout: 15000,
+                                                            maximumAge: 0
+                                                        }
+                                                    );
+                                                } else {
+                                                    alert("❌ Geolocalización no soportada en este navegador.");
                                                 }
                                             }}
-                                            className={`h-11 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 transition-all ${formIndividual.data.entrega_latitud ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-white text-indigo-600 border border-slate-200'}`}
+                                            className={`h-11 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 transition-all ${formEntrega.data.entrega_latitud ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-white text-indigo-600 border border-slate-200'}`}
                                         >
-                                            <span>📍</span> {formIndividual.data.entrega_latitud ? 'Ubicación OK' : 'Capturar GPS'}
+                                            <span>📍</span> {formEntrega.data.entrega_latitud ? 'Ubicación OK' : 'Capturar GPS'}
                                         </button>
 
                                         <div className="relative">
@@ -252,15 +326,15 @@ export default function Index({ auth, conduces, escuelas, platos, rutas }) {
                                                 type="file" 
                                                 accept="image/*" 
                                                 capture="camera"
-                                                onChange={e => formIndividual.setData("foto_evidencia", e.target.files[0])}
+                                                onChange={e => formEntrega.setData("foto_evidencia", e.target.files[0])}
                                                 className="hidden" 
                                                 id="foto-camera"
                                             />
                                             <label 
                                                 htmlFor="foto-camera"
-                                                className={`h-11 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 transition-all cursor-pointer ${formIndividual.data.foto_evidencia ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-white text-indigo-600 border border-slate-200'}`}
+                                                className={`h-11 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 transition-all cursor-pointer ${formEntrega.data.foto_evidencia ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-white text-indigo-600 border border-slate-200'}`}
                                             >
-                                                <span>📸</span> {formIndividual.data.foto_evidencia ? 'Foto OK' : 'Tomar Foto'}
+                                                <span>📸</span> {formEntrega.data.foto_evidencia ? 'Foto OK' : 'Tomar Foto'}
                                             </label>
                                         </div>
                                     </div>
@@ -328,25 +402,7 @@ export default function Index({ auth, conduces, escuelas, platos, rutas }) {
                                             {/* HERRAMIENTA DE ENTREGA PARA EL CHOFER */}
                                             {c.estado === 'pendiente' && !editando && (
                                                 <button 
-                                                    onClick={() => {
-                                                        const lat = formIndividual.data.entrega_latitud;
-                                                        const lon = formIndividual.data.entrega_longitud;
-                                                        const foto = formIndividual.data.foto_evidencia;
-
-                                                        if (!lat || !lon || !foto) {
-                                                            alert("⚠️ Primero captura el GPS y la Foto arriba (en herramientas de entrega) para este conduce.");
-                                                            // Permitimos que el admin use el form de arriba, pero para el chofer
-                                                            // necesitamos que capture la evidencia.
-                                                            // Como ocultamos el form de arriba para el chofer, 
-                                                            // vamos a mover los botones de captura AQUÍ dentro si es chofer.
-                                                        } else {
-                                                            router.patch(route("conduces.entregar", c.id), {
-                                                                entrega_latitud: lat,
-                                                                entrega_longitud: lon,
-                                                                foto_evidencia: foto
-                                                            });
-                                                        }
-                                                    }}
+                                                    onClick={() => handleConfirmarEntrega(c)}
                                                     className="bg-indigo-600 text-white px-3 py-1 rounded-lg text-[9px] font-black uppercase"
                                                 >
                                                     Entregar
@@ -392,14 +448,7 @@ export default function Index({ auth, conduces, escuelas, platos, rutas }) {
                                             </div>
                                             {(formIndividual.data.entrega_latitud && formIndividual.data.foto_evidencia) && (
                                                 <button 
-                                                    onClick={() => {
-                                                        formIndividual.patch(route("conduces.entregar", c.id), {
-                                                            onSuccess: () => {
-                                                                alert("¡Despacho completado!");
-                                                                formIndividual.reset();
-                                                            }
-                                                        });
-                                                    }}
+                                                    onClick={() => handleConfirmarEntrega(c)}
                                                     className="w-full mt-2 h-9 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase animate-bounce"
                                                 >
                                                     🚀 Confirmar Despacho

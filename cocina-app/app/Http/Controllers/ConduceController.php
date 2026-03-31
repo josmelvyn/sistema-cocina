@@ -13,6 +13,26 @@ use Illuminate\Support\Facades\DB;
 
 class ConduceController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            $user = auth()->user();
+            $restrictedActions = [
+                'store',
+                'update',
+                'generarMasivo',
+                'anular',
+                'pagar',
+            ];
+
+            if ($user && $user->rol === 'chofer' && in_array($request->route()->getActionMethod(), $restrictedActions)) {
+                return redirect()->back()->with('error', 'No tienes permiso para realizar esta operación. Los conduces se generan desde la administración.');
+            }
+
+            return $next($request);
+        });
+    }
+
    public function index()
 {
     return Inertia::render('Conduces/Index', [
@@ -332,14 +352,24 @@ public function relacionGeneral(Request $request)
 public function completarEntrega(Request $request, $id)
 {
     $validated = $request->validate([
-        'entrega_latitud' => 'required|numeric', 'entrega_longitud' => 'required|numeric', 'foto_evidencia' => 'required|image|max:2048',
+        'entrega_latitud' => 'required|numeric',
+        'entrega_longitud' => 'required|numeric',
+        'foto_evidencia' => 'nullable|image|max:2048',
     ]);
     $conduce = Conduce::findOrFail($id);
-    $fotoPath = $request->file('foto_evidencia')->store('evidencias', 'public');
-    $conduce->update([
-        'entrega_latitud' => $validated['entrega_latitud'], 'entrega_longitud' => $validated['entrega_longitud'],
-        'foto_evidencia' => $fotoPath, 'estado' => 'entregado'
-    ]);
+
+    $updateData = [
+        'entrega_latitud' => $validated['entrega_latitud'],
+        'entrega_longitud' => $validated['entrega_longitud'],
+        'estado' => 'entregado',
+    ];
+
+    if ($request->hasFile('foto_evidencia')) {
+        $updateData['foto_evidencia'] = $request->file('foto_evidencia')->store('evidencias', 'public');
+    }
+
+    $conduce->update($updateData);
+
     return redirect()->back()->with('message', 'Entrega confirmada');
 }
 

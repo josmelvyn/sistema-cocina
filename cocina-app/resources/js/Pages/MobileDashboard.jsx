@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useState } from 'react';
 import { db } from '../db';
@@ -78,6 +78,13 @@ export default function MobileDashboard({ auth, stats: serverStats, insumos_bajo
                         </div>
                     </div>
                 )}
+
+                {/* BOTÓN CERRAR SESIÓN */}
+                <div className="mb-3 flex justify-end">
+                    <button onClick={() => router.post(route('logout'))} className="text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors">
+                        Salir
+                    </button>
+                </div>
 
                 {/* TARJETA PRINCIPAL (Raciones) */}
                 <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-800 rounded-[2rem] p-6 text-white shadow-xl shadow-indigo-500/20 relative overflow-hidden active:scale-[0.98] transition-transform">

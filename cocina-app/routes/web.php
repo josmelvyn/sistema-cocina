@@ -2,7 +2,7 @@
 
 Route::get('/manifest.webmanifest', function () {
     return response()->file(public_path('build/manifest.webmanifest'), [
-        'Content-Type' => 'application/manifest+json',
+        'Content-Type' => 'application/json',
     ]);
 });
 

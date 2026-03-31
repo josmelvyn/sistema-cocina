@@ -158,7 +158,7 @@ export default function MobileLayout({ children, title, headerTitle, headerSubti
 
             {/* BOTTOM NAVIGATION BAR */}
             <nav className="fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-xl border-t border-slate-200/60 pb-5 pt-3 px-6 flex justify-between items-center z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.06)]">
-                <BottomLink href={route('dashboard')} icon="🏠" label="Inicio" active={route().current('dashboard*')} />
+                <BottomLink href={route('dashboard')} icon="🏠" label="Inicio" active={route().current('dashboard*')} />*
                 <BottomLink href={route('rutas.index')} icon="🚚" label="Rutas" active={route().current('rutas.*')} />
                 <BottomLink href={route('conduces.index')} icon="📝" label="Despachos" active={route().current('conduces.*')} />
                 <BottomLink href={route('insumos.index')} icon="🏭" label="Insumos" active={route().current('insumos.*')} />
