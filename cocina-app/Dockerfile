@@ -1,31 +1,49 @@
+# Usamos PHP 8.3 con Apache
 FROM php:8.3-apache
 
-# Dependencias
-RUN apt-get update && apt-get install -y git unzip libzip-dev libonig-dev curl npm \
-    && docker-php-ext-install pdo_mysql zip mbstring
+# -------------------------
+# Dependencias del sistema
+# -------------------------
+RUN apt-get update && \
+    apt-get install -y git unzip libzip-dev libonig-dev curl npm && \
+    docker-php-ext-install pdo_mysql zip mbstring
 
+# -------------------------
 # Composer
+# -------------------------
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# -------------------------
+# Directorio de trabajo
+# -------------------------
 WORKDIR /app
 COPY . /app
 
-# PHP
-RUN composer install --ignore-platform-reqs
+# -------------------------
+# PHP - Composer install
+# -------------------------
+RUN composer install --ignore-platform-reqs --no-interaction --prefer-dist
 
-# Node
+# -------------------------
+# Node.js - Build frontend
+# -------------------------
 RUN npm install
 RUN npm run build
 
-# Permisos
+# -------------------------
+# Permisos y Apache
+# -------------------------
 RUN chown -R www-data:www-data /app
+RUN a2enmod rewrite
 
-EXPOSE 80
+# -------------------------
+# Variables de entorno para producción
+# -------------------------
+ENV APP_ENV=production
+ENV APP_DEBUG=false
 
-# Script de espera para BD
-RUN apt-get install -y netcat-traditional
-COPY wait-for-db.sh /usr/local/bin/wait-for-db.sh
-RUN chmod +x /usr/local/bin/wait-for-db.sh
-
-# Start command con espera
-CMD ["sh", "-c", "wait-for-db.sh && php artisan config:clear && php artisan cache:clear && php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT"]
+# -------------------------
+# Comando de arranque
+# -------------------------
+# Solo corre Apache, las migraciones se hacen aparte
+CMD ["vendor/bin/heroku-php-apache2", "public/"]
