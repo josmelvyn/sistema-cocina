@@ -40,6 +40,11 @@ RUN chown -R www-data:www-data /app
 RUN a2enmod rewrite
 
 # ----------------------
+# Apache: apuntar DocumentRoot al directorio public de Laravel
+# ----------------------
+RUN echo '<VirtualHost *:80>\n  DocumentRoot /app/public\n  <Directory /app/public>\n    AllowOverride All\n    Require all granted\n  </Directory>\n</VirtualHost>' > /etc/apache2/sites-available/000-default.conf
+
+# ----------------------
 # CMD seguro: migraciones solo si DB está lista
 # ----------------------
 CMD ["sh", "-c", "\
@@ -47,5 +52,5 @@ CMD ["sh", "-c", "\
   php artisan cache:clear && \
   until php -r \"try { new PDO('mysql:host=' . getenv('DB_HOST') . ';dbname=' . getenv('DB_DATABASE'), getenv('DB_USERNAME'), getenv('DB_PASSWORD')); echo 'DB ready'; } catch (Exception $e) { exit(1); }\"; do echo 'Waiting for DB...'; sleep 3; done && \
   php artisan migrate --force && \
-  vendor/bin/heroku-php-apache2 public/ \
+  apache2-foreground \
 "]
