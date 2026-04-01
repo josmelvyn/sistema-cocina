@@ -17,7 +17,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    'default' => env('DB_CONNECTION', 'mysql'),
 
     /*
     |--------------------------------------------------------------------------
@@ -68,21 +68,6 @@ return [
        'timeout' => 60 * 5, // 5 minutos
     ],
         ],
-
-  'mysql' => [
-    'driver' => 'mysql',
-    'host' => str_replace('"', '', env('DB_HOST')),
-    'port' => str_replace('"', '', env('DB_PORT')),
-    'database' => str_replace('"', '', env('DB_DATABASE')),
-    'username' => str_replace('"', '', env('DB_USERNAME')),
-    'password' => str_replace('"', '', env('DB_PASSWORD')),
-    'unix_socket' => env('DB_SOCKET', ''),
-    'charset' => 'utf8mb4',
-    'collation' => 'utf8mb4_unicode_ci',
-    'prefix' => '',
-    'strict' => true,
-    'engine' => null,
-],
 
         'mariadb' => [
             'driver' => 'mariadb',
