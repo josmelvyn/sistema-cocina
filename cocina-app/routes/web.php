@@ -26,6 +26,7 @@ use App\Http\Controllers\SuscripcionController;
 use Illuminate\Foundation\Application;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\NfcController;
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\CheckSubscription; 
@@ -68,6 +69,7 @@ Route::post('/suscribir-ahora', [SuscripcionController::class, 'suscribir'])->na
 
 });
 
+
 Route::middleware(['auth', CheckSubscription::class])->group(function () {
     
     // 1. Dashboard
@@ -95,7 +97,13 @@ Route::middleware(['auth', CheckSubscription::class])->group(function () {
     Route::patch('/facturas/anular/{id}', [FacturaController::class, 'anular'])->name('facturas.anular');
     Route::get('/facturas/imprimir/{id}', [FacturaController::class, 'imprimir'])->name('facturas.imprimir');
      Route::get('/facturas/nota-credito/{id}', [FacturaController::class, 'imprimirNotaCredito'])->name('facturas.nota_credito');
-    //Facturacion masiva
+     // NUEVAS RUTAS PARA NCF
+   Route::get('/nfc', [NfcController::class, 'index'])->name('nfc.index');
+   Route::post('/nfc', [NfcController::class, 'store'])->name('nfc.store');
+     Route::get('/nfc-manager', [App\Http\Controllers\NfcSequenceController::class, 'render'])->name('nfc.index');
+    Route::get('/api/nfc-sequences', [App\Http\Controllers\NfcSequenceController::class, 'index']);
+    Route::post('/api/nfc-sequences', [App\Http\Controllers\NfcSequenceController::class, 'store']);
+     //Facturacion masiva
     Route::post('/facturacion-masiva', [FacturaController::class, 'facturacionMasiva'])->name('facturas.masiva');
     // 4. Recursos Básicos
     Route::resource('rutas', RutaController::class);

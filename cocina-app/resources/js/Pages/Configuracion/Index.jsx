@@ -1,6 +1,6 @@
 import React from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, Link } from '@inertiajs/react'; // Añadimos Link aquí
 
 export default function Index({ auth, empresa }) {
     const { data, setData, post, processing, errors, recentlySuccessful } = useForm({
@@ -19,12 +19,30 @@ export default function Index({ auth, empresa }) {
     return (
         <AuthenticatedLayout
             user={auth.user}
-            header={<h2 className="font-black text-xl text-gray-800 leading-tight uppercase">Configuración de la Empresa</h2>}
+            header={<h2 className="font-black text-xl text-gray-800 leading-tight uppercase">Configuración del Sistema</h2>}
         >
             <Head title="Configuración" />
 
             <div className="py-12">
-                <div className="max-w-4xl mx-auto sm:px-6 lg:px-8">
+                <div className="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
+                    
+                    {/* SECCIÓN NUEVA: GESTIÓN DE NCF */}
+                    <div className="bg-indigo-600 overflow-hidden shadow-xl sm:rounded-2xl border border-indigo-700">
+                        <div className="p-8 flex flex-col md:flex-row justify-between items-center gap-6">
+                            <div className="text-center md:text-left">
+                                <h3 className="text-lg font-black text-white uppercase tracking-tight">Secuencias de NCF</h3>
+                                <p className="text-sm text-indigo-100 mt-1 font-medium">Configura tus comprobantes fiscales (B01, B02, B14, etc.)</p>
+                            </div>
+                            <Link 
+                                href={route('nfc.index')} 
+                                className="bg-white hover:bg-black hover:text-white text-indigo-600 px-8 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 shrink-0"
+                            >
+                                Gestionar Números
+                            </Link>
+                        </div>
+                    </div>
+
+                    {/* FORMULARIO DE PERFIL (Tu código original) */}
                     <div className="bg-white overflow-hidden shadow-xl sm:rounded-2xl border border-gray-100">
                         <div className="p-8">
                             <div className="mb-8">
@@ -66,21 +84,8 @@ export default function Index({ auth, empresa }) {
                                             value={data.telefono}
                                             onChange={(e) => setData('telefono', e.target.value)}
                                             className="w-full bg-gray-50 border-gray-200 rounded-xl py-3 px-4 font-bold text-gray-700 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
-                                            placeholder="809-XXX-XXXX / 829-XXX-XXXX"
+                                            placeholder="809-XXX-XXXX"
                                         />
-                                        {errors.telefono && <div className="text-red-500 text-xs mt-1 font-bold">{errors.telefono}</div>}
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Correo Electrónico</label>
-                                        <input
-                                            type="email"
-                                            value={data.email}
-                                            onChange={(e) => setData('email', e.target.value)}
-                                            className="w-full bg-gray-50 border-gray-200 rounded-xl py-3 px-4 font-bold text-gray-700 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
-                                            placeholder="correo@ejemplo.com"
-                                        />
-                                        {errors.email && <div className="text-red-500 text-xs mt-1 font-bold">{errors.email}</div>}
                                     </div>
 
                                     <div>
@@ -92,20 +97,30 @@ export default function Index({ auth, empresa }) {
                                             className="w-full bg-gray-50 border-gray-200 rounded-xl py-3 px-4 font-bold text-gray-700 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                                             placeholder="000-0000000-0"
                                         />
-                                        {errors.rnc && <div className="text-red-500 text-xs mt-1 font-bold">{errors.rnc}</div>}
+                                    </div>
+                                    
+                                    {/* Email añadido para completar tu estructura */}
+                                    <div className="md:col-span-2">
+                                        <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Correo Electrónico</label>
+                                        <input
+                                            type="email"
+                                            value={data.email}
+                                            onChange={(e) => setData('email', e.target.value)}
+                                            className="w-full bg-gray-50 border-gray-200 rounded-xl py-3 px-4 font-bold text-gray-700 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                                        />
                                     </div>
                                 </div>
 
                                 <div className="flex items-center gap-4 pt-4">
                                     <button
                                         disabled={processing}
-                                        className="bg-indigo-600 hover:bg-black text-white px-10 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-indigo-600/20 active:scale-95 disabled:opacity-50"
+                                        className="bg-indigo-600 hover:bg-black text-white px-10 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 disabled:opacity-50"
                                     >
                                         {processing ? 'Guardando...' : 'Guardar Cambios'}
                                     </button>
 
                                     {recentlySuccessful && (
-                                        <div className="text-emerald-600 font-bold text-sm animate-in fade-in slide-in-from-left-2 flex items-center gap-2">
+                                        <div className="text-emerald-600 font-bold text-sm flex items-center gap-2">
                                             <span>✅</span> ¡Guardado con éxito!
                                         </div>
                                     )}
@@ -113,6 +128,7 @@ export default function Index({ auth, empresa }) {
                             </form>
                         </div>
                     </div>
+
                 </div>
             </div>
         </AuthenticatedLayout>
