@@ -100,6 +100,7 @@ Route::middleware(['auth', CheckSubscription::class])->group(function () {
      // NUEVAS RUTAS PARA NCF
    Route::get('/nfc', [NfcController::class, 'index'])->name('nfc.index');
    Route::post('/nfc', [NfcController::class, 'store'])->name('nfc.store');
+   Route::put('/nfc/{id}', [NfcController::class, 'update'])->name('nfc.update');
      Route::get('/nfc-manager', [App\Http\Controllers\NfcSequenceController::class, 'render'])->name('nfc.index');
     Route::get('/api/nfc-sequences', [App\Http\Controllers\NfcSequenceController::class, 'index']);
     Route::post('/api/nfc-sequences', [App\Http\Controllers\NfcSequenceController::class, 'store']);

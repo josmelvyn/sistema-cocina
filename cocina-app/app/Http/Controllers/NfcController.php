@@ -30,7 +30,7 @@ class NfcController extends Controller
         'numero_final'      => 'required|integer',
         'fecha_vencimiento' => 'required|date',
     ]);
-    
+   
     $data['activa'] = true;
 
     // ¡ESTA LÍNEA ES VITAL!
@@ -38,4 +38,22 @@ class NfcController extends Controller
 
     return redirect()->back(); // Esto le dice a Inertia que recargue los datos
 }
+public function update(Request $request, $id) 
+{
+    $data = $request->validate([
+        'nombre'            => 'required|string',
+        'tipo'              => 'required|numeric',
+        'prefijo'           => 'required|string',
+        'proximo_numero'    => 'required|integer',
+        'numero_final'      => 'required|integer',
+        'fecha_vencimiento' => 'required|date',
+    ]);
+
+    // Busca la secuencia por su ID y actualiza los datos
+    $sequence = \App\Models\NfcSequence::findOrFail($id);
+    $sequence->update($data);
+
+    return redirect()->back();
+}
+
 }
