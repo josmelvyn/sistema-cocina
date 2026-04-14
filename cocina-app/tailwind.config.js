@@ -10,6 +10,14 @@ export default {
         './resources/js/**/*.jsx',
     ],
 
+        darkMode: 'class', // <--- Esto permite activar el modo oscuro con la clase "dark" en el <html>
+    content: [
+        './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
+        './storage/framework/views/*.php',
+        './resources/views/**/*.blade.php',
+        './resources/js/**/*.jsx',
+    ],
+
     theme: {
         extend: {
             fontFamily: {
@@ -20,3 +28,4 @@ export default {
 
     plugins: [forms],
 };
+
